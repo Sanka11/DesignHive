@@ -1,0 +1,12 @@
+# Node
+node_modules/
+dist/
+
+# Java
+target/
+*.iml
+
+# Common
+.DS_Store
+.idea/
+.vscode/
