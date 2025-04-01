@@ -17,7 +17,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
         String referer = request.getHeader("Referer");
 
-        String frontendUrl = "http://localhost:5173/dashboard";
+        String frontendUrl = "http://localhost:5174/dashboard";
         if (referer != null && referer.startsWith("http://localhost")) {
             String origin = referer.split("/")[0] + "//" + referer.split("/")[2]; // e.g., http://localhost:5174
             frontendUrl = origin + "/dashboard";
