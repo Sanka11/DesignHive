@@ -73,6 +73,9 @@
             <artifactId>firebase-admin</artifactId>
             <version>9.1.1</version>
         </dependency>
+
+		
+		
 	</dependencies>
 
 	<build>

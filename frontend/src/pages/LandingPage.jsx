@@ -50,6 +50,7 @@ const LandingPage = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="bg-white text-blue-600 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-100 transition border border-blue-600 shadow-lg text-sm sm:text-base"
+        onClick={() => window.location.href = '/login'}
         >
           Login
         </motion.button>
@@ -58,6 +59,7 @@ const LandingPage = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="bg-gray-800 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-700 transition shadow-lg text-sm sm:text-base"
+        onClick={() => window.location.href = '/register'}
         >
           Register
         </motion.button>

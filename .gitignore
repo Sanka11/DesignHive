@@ -10,3 +10,17 @@ target/
 .DS_Store
 .idea/
 .vscode/
+
+# Backend
+*.log
+.env
+*.class
+*.jar
+*.war
+*.ear
+
+# Frontend
+build/
+coverage/
+npm-debug.log
+yarn-error.log
