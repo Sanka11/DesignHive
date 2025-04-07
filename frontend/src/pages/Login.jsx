@@ -1,20 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
+import axios from "../api/axios";
+import { useAuth } from "../auth/useAuth";
+import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useLocation } from 'react-router-dom';
 
-export default function LoginPage() {
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [notification, setNotification] = useState({ 
@@ -22,140 +20,47 @@ export default function LoginPage() {
     message: '', 
     type: '' 
   });
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
+  useState(() => {
     setIsMounted(true);
-    checkAuthStatus();
-    const savedEmail = localStorage.getItem('rememberedEmail');
-    if (savedEmail) {
-      setFormData(prev => ({ ...prev, email: savedEmail }));
-      setRememberMe(true);
-    }
   }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('logout_success') === 'true') {
-      setNotification({
-        show: true,
-        message: 'You have been logged out successfully',
-        type: 'success'
-      });
-      localStorage.removeItem('rememberedEmail');
-    }
-  }, [location]);
-
-  const checkAuthStatus = async () => {
-    try {
-      const response = await axios.get('http://localhost:9090/api/user', {
-        withCredentials: true
-      });
-      if (response.data && response.data.email) {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.log('User not authenticated');
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    setIsLoading(true);
-    window.location.href = 'http://localhost:9090/oauth2/authorization/google';
-  };
-
-  const handleGithubLogin = () => {
-    setIsLoading(true);
-    window.location.href = 'http://localhost:9090/oauth2/authorization/github';
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    if (errors.form) {
-      setErrors(prev => ({ ...prev, form: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      const response = await axios.post(
-        'http://localhost:9090/api/auth/login',
-        {
-          email: formData.email,
-          password: formData.password
-        },
-        { withCredentials: true }
-      );
+    const res = await axios.post("/auth/login", { email, password });
+    if (!res.data.startsWith("Invalid")) {
+      await login(res.data); // JWT login
       
-      if (response.status === 200) {
-        if (rememberMe) {
-          localStorage.setItem('rememberedEmail', formData.email);
-        } else {
-          localStorage.removeItem('rememberedEmail');
-        }
-        
-        setNotification({
-          show: true,
-          message: 'Login successful! Welcome back!',
-          type: 'success'
-        });
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      if (error.response) {
-        if (error.response.status === 401) {
-          setErrors({ form: 'Invalid email or password' });
-        } else {
-          setErrors({ form: error.response.data.message || 'Login failed. Please try again.' });
-        }
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
       } else {
-        setErrors({ form: 'Network error. Please try again.' });
+        localStorage.removeItem('rememberedEmail');
       }
-    } finally {
-      setIsLoading(false);
+      
+      setNotification({
+        show: true,
+        message: 'Login successful!',
+        type: 'success'
+      });
+      
+      setTimeout(() => {
+        navigate("/home"); // Redirect to dashboard after 1.5 seconds
+      }, 1500);
+    } else {
+      setNotification({
+        show: true,
+        message: res.data,
+        type: 'error'
+      });
     }
+  };
+
+  const handleSocialLogin = (provider) => {
+    window.location.href = `http://localhost:9090/oauth2/authorization/${provider}`;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center p-4">
-      {/* Notification */}
       {notification.show && (
         <motion.div 
           className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
@@ -187,7 +92,6 @@ export default function LoginPage() {
         transition={{ duration: 0.6 }}
       >
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Header with Bee Icon */}
           <motion.div 
             className="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-center relative"
             initial={{ opacity: 0 }}
@@ -217,7 +121,7 @@ export default function LoginPage() {
               animate={isMounted ? { opacity: 1 } : {}}
               transition={{ delay: 0.6, duration: 0.6 }}
             >
-              Welcome back to the hive!
+              Welcome back!
             </motion.p>
             <motion.div 
               className="absolute top-4 right-4"
@@ -229,7 +133,6 @@ export default function LoginPage() {
             </motion.div>
           </motion.div>
 
-          {/* Login Form */}
           <div className="p-8">
             <motion.h2 
               className="text-2xl font-bold text-gray-800 mb-6 text-center"
@@ -240,20 +143,9 @@ export default function LoginPage() {
               Sign In to Your Account
             </motion.h2>
             
-            {errors.form && (
-              <motion.div 
-                className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {errors.form}
-              </motion.div>
-            )}
-            
             <div className="space-y-4 mb-6">
               <motion.button
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
+                onClick={() => handleSocialLogin("google")}
                 className="w-full flex items-center justify-center space-x-3 bg-white border border-gray-300 rounded-lg py-3 px-4 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -263,13 +155,12 @@ export default function LoginPage() {
               >
                 <FcGoogle className="text-xl" />
                 <span className="text-gray-700 font-medium">
-                  {isLoading ? 'Signing in...' : 'Continue with Google'}
+                  Continue with Google
                 </span>
               </motion.button>
 
               <motion.button
-                onClick={handleGithubLogin}
-                disabled={isLoading}
+                onClick={() => handleSocialLogin("github")}
                 className="w-full flex items-center justify-center space-x-3 bg-white border border-gray-300 rounded-lg py-3 px-4 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -279,7 +170,7 @@ export default function LoginPage() {
               >
                 <FaGithub className="text-xl text-gray-800" />
                 <span className="text-gray-700 font-medium">
-                  {isLoading ? 'Signing in...' : 'Continue with GitHub'}
+                  Continue with GitHub
                 </span>
               </motion.button>
             </div>
@@ -306,16 +197,14 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200`}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200"
                   placeholder="your@email.com"
                 />
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
               </motion.div>
 
               <motion.div
@@ -329,13 +218,12 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     id="password"
-                    name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200 pr-12`}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200 pr-12"
                     placeholder="••••••••"
                   />
                   <button
@@ -346,7 +234,6 @@ export default function LoginPage() {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
-                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
               </motion.div>
 
               <motion.div 
@@ -370,23 +257,22 @@ export default function LoginPage() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="/forgot-password" className="font-medium text-amber-600 hover:text-amber-500">
+                  <Link to="/forgot-password" className="font-medium text-amber-600 hover:text-amber-500">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </motion.div>
 
               <motion.button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={isMounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 1.0, duration: 0.4 }}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                Sign In
               </motion.button>
             </form>
 
@@ -397,10 +283,10 @@ export default function LoginPage() {
               transition={{ delay: 1.1, duration: 0.6 }}
             >
               <p>
-                New to DesignHive?{' '}
-                <a href="/register" className="font-medium text-amber-600 hover:text-amber-500">
+                New to our platform?{' '}
+                <Link to="/register" className="font-medium text-amber-600 hover:text-amber-500">
                   Create an account
-                </a>
+                </Link>
               </p>
             </motion.div>
           </div>
@@ -412,7 +298,7 @@ export default function LoginPage() {
           animate={isMounted ? { opacity: 1 } : {}}
           transition={{ delay: 1.2, duration: 0.6 }}
         >
-          <p>© {new Date().getFullYear()} DesignHive. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} YourAppName. All rights reserved.</p>
         </motion.div>
       </motion.div>
     </div>

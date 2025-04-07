@@ -1,39 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaBell, FaBars, FaTimes, FaSearch, FaThumbsUp, FaSignOutAlt, FaUser, FaQuestionCircle } from "react-icons/fa";
 import { RiDashboardLine } from "react-icons/ri";
 import { GiBee } from "react-icons/gi";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../auth/useAuth";
 import DesignHiveLogo from "../assets/DesignHiveLogo.png";
+import defaultProfilePic from "../assets/default-profile.png"; 
+
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const profileRef = useRef(null);
-  const navigate = useNavigate();
 
-  // Fetch user data
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get('http://localhost:9090/api/user', {
-          withCredentials: true
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [navigate]);
+  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
+  if (hideNavbar) return null;
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const toggleProfile = () => setProfileOpen(!profileOpen);
@@ -41,13 +29,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:9090/api/auth/logout', {}, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      localStorage.removeItem('rememberedEmail');
+      await logout();
       navigate('/login?logout_success=true', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
@@ -55,38 +37,42 @@ const Navbar = () => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+  if (!user) return null;
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const profilePic = user.profileImagePath
+    ? user.profileImagePath.startsWith("http")
+      ? user.profileImagePath
+      : `http://localhost:9090${user.profileImagePath}`
+    : defaultProfilePic;
 
-  if (loading) return null;
+  const firstName = user.username?.split(' ')[0] || 'User';
+  const userEmail = user.email || '';
 
-  const profilePic = user?.picture || user?.avatar_url;
-  const firstName = user?.name?.split(' ')[0] || 'User';
-  const userEmail = user?.email || '';
+  const handleImgError = (e) => {
+    e.target.onerror = null;
+    e.target.src = "/default-profile.png"; // Place this image in your public/ folder
+  };
 
   return (
     <nav className={`bg-amber-50 text-gray-900 fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? "shadow-lg py-1" : "shadow-md py-2"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Navbar */}
         <div className="flex justify-between items-center h-16">
-          {/* Logo and Mobile Search */}
           <div className="flex items-center space-x-4">
             <Link to="/dashboard" className="flex items-center">
               <img src={DesignHiveLogo} alt="DesignHive" className="h-10 w-auto" />
@@ -96,7 +82,6 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Desktop Search */}
           <div className={`hidden md:flex items-center mx-4 flex-1 max-w-2xl ${searchOpen ? "md:hidden" : ""}`}>
             <div className="relative w-full">
               <input
@@ -108,7 +93,6 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <NavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</NavLink>
             <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
@@ -120,11 +104,10 @@ const Navbar = () => {
               <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
             </button>
 
-            {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <button onClick={toggleProfile} className="flex items-center space-x-2 p-1 rounded-full hover:bg-amber-100 transition" aria-label="Profile menu">
                 {profilePic ? (
-                  <img src={profilePic} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-amber-300" referrerPolicy="no-referrer" />
+                  <img src={profilePic} onError={handleImgError} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-amber-300" referrerPolicy="no-referrer" />
                 ) : (
                   <GiBee className="text-amber-800 text-2xl" />
                 )}
@@ -143,12 +126,12 @@ const Navbar = () => {
                     <div className="px-4 py-3 border-b border-amber-100 bg-amber-100">
                       <div className="flex items-center space-x-3">
                         {profilePic ? (
-                          <img src={profilePic} alt="Profile" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={profilePic} onError={handleImgError} alt="Profile" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
                           <GiBee className="text-amber-800 text-2xl" />
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+                          <p className="font-medium text-sm truncate">{user.username || 'User'}</p>
                           <p className="text-xs text-amber-800/70 break-all">{userEmail}</p>
                         </div>
                       </div>
@@ -167,7 +150,6 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-3">
             <button onClick={toggleMenu} className="p-2 rounded-full hover:bg-amber-100 transition" aria-label="Menu">
               {menuOpen ? <FaTimes className="text-xl text-amber-800" /> : <FaBars className="text-xl text-amber-800" />}
@@ -175,7 +157,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Search */}
         {searchOpen && (
           <div className="md:hidden my-3">
             <div className="relative w-full">
@@ -190,7 +171,6 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -203,12 +183,12 @@ const Navbar = () => {
             <div className="px-4 pt-3 pb-6 space-y-3">
               <div className="flex items-center space-x-3 px-4 py-3 border-b border-amber-100">
                 {profilePic ? (
-                  <img src={profilePic} alt="Profile" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={profilePic} onError={handleImgError} alt="Profile" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <GiBee className="text-amber-800 text-3xl" />
                 )}
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{user?.name || 'User'}</p>
+                  <p className="font-medium truncate">{user.username || 'User'}</p>
                   <p className="text-xs text-amber-800/70 break-all">{userEmail}</p>
                 </div>
               </div>
@@ -232,7 +212,6 @@ const Navbar = () => {
   );
 };
 
-// Reusable Components
 const NavLink = ({ to, children, icon }) => (
   <Link to={to} className="flex items-center space-x-1 px-3 py-2 rounded-lg hover:bg-amber-100 hover:text-amber-900 transition font-medium text-amber-800">
     {icon && <span className="text-lg">{icon}</span>}
