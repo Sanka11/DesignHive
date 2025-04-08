@@ -38,13 +38,12 @@ public class PostService {
             return updatedLikes;
         }).get();
     }
-    
+
     public void addComment(String postId, String comment) throws Exception {
         firestore.collection("posts").document(postId)
                 .collection("comments").add(Map.of(
                         "text", comment,
-                        "createdAt", Timestamp.now()
-                ));
+                        "createdAt", Timestamp.now()));
     }
 
     public List<Map<String, Object>> getComments(String postId) throws Exception {
@@ -61,11 +60,16 @@ public class PostService {
                 }).collect(Collectors.toList());
     }
 
-    public Map<String, Object> createPost(String content) throws Exception {
+    // ✅ Updated to include authorEmail, authorUsername, authorId
+    public Map<String, Object> createPost(String content, String authorEmail, String authorUsername, String authorId)
+            throws Exception {
         Map<String, Object> post = new HashMap<>();
         post.put("content", content);
         post.put("likes", 0);
         post.put("createdAt", Timestamp.now());
+        post.put("authorEmail", authorEmail);
+        post.put("authorUsername", authorUsername);
+        post.put("authorId", authorId);
 
         DocumentReference docRef = firestore.collection("posts").document();
         docRef.set(post).get();

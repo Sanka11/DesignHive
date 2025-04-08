@@ -11,6 +11,9 @@ import Profile from "./pages/Profile";
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Post from "./pages/Post";
+import NewPost from "./pages/NewPost";
+import NewPostPage from "./pages/NewPostPage";
+import OAuthRedirect from "./pages/OAuthRedirect";
 
 function App() {
   return (
@@ -20,6 +23,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/" element={<LandingPage />} />
+      <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
 
       {/* Pages with Navbar */}
       <Route element={<MainLayout />}>
@@ -27,7 +31,8 @@ function App() {
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/Feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
         <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
-       
+        <Route path="/newpost" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
+
         {/* Add more routes here under the Navbar layout */}
       </Route>
 

@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,8 +34,18 @@ public class userController {
     @Autowired
     private UserRepository userRepository;
 
+    @GetMapping("/email/{email}")
+    public User getUserByEmailPath(@PathVariable String email) throws Exception {
+        System.out.println("🔍 Looking up user by email (path): " + email);
+        User user = userRepository.getUserByEmail(email);
+        if (user == null)
+            throw new Exception("User not found");
+        return user;
+    }
+
     @GetMapping("/profile")
-    public User getUserByEmail(@RequestParam String email) throws Exception {
+    public User getUserByEmailQuery(@RequestParam String email) throws Exception {
+        System.out.println("🔍 Looking up user by email (query): " + email);
         User user = userRepository.getUserByEmail(email);
         if (user == null) {
             throw new Exception("User not found");
@@ -74,8 +85,7 @@ public class userController {
             @RequestParam(value = "skills", required = false) List<String> skills,
             @RequestParam(value = "openToSkillShare", required = false) Boolean openToSkillShare,
             @RequestParam(value = "platforms", required = false) List<String> platforms,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage
-    ) throws Exception {
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws Exception {
 
         User user = userRepository.getUserByEmail(email);
         if (user == null) {
@@ -83,22 +93,35 @@ public class userController {
         }
 
         user.setUsername(username);
-        if (fullName != null) user.setFullName(fullName);
-        if (bio != null) user.setBio(bio);
-        if (age != null) user.setAge(age);
-        if (birthday != null) user.setBirthday(birthday);
-        if (interests != null) user.setInterests(interests);
-        if (gender != null) user.setGender(gender);
-        if (location != null) user.setLocation(location);
-        if (contactNo != null) user.setContactNo(contactNo);
-        if (preferences != null) user.setPreferences(preferences);
-        if (skills != null) user.setSkills(skills);
-        if (openToSkillShare != null) user.setOpenToSkillShare(openToSkillShare);
-        if (platforms != null) user.setPlatforms(platforms);
+        if (fullName != null)
+            user.setFullName(fullName);
+        if (bio != null)
+            user.setBio(bio);
+        if (age != null)
+            user.setAge(age);
+        if (birthday != null)
+            user.setBirthday(birthday);
+        if (interests != null)
+            user.setInterests(interests);
+        if (gender != null)
+            user.setGender(gender);
+        if (location != null)
+            user.setLocation(location);
+        if (contactNo != null)
+            user.setContactNo(contactNo);
+        if (preferences != null)
+            user.setPreferences(preferences);
+        if (skills != null)
+            user.setSkills(skills);
+        if (openToSkillShare != null)
+            user.setOpenToSkillShare(openToSkillShare);
+        if (platforms != null)
+            user.setPlatforms(platforms);
 
         if (profileImage != null && !profileImage.isEmpty()) {
             String filename = UUID.randomUUID() + "_" + profileImage.getOriginalFilename();
-            Path filePath = Paths.get("E:\\DesignHive\\DesignHive\\backend\\src\\main\\resources\\static\\uploads", filename);
+            Path filePath = Paths.get("E:\\DesignHive\\DesignHive\\backend\\src\\main\\resources\\static\\uploads",
+                    filename);
             Files.copy(profileImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             user.setProfileImagePath("/uploads/" + filename);
         }

@@ -74,7 +74,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="flex items-center">
+            <Link to="/feed" className="flex items-center">
               <img src={DesignHiveLogo} alt="DesignHive" className="h-10 w-auto" />
             </Link>
             <button onClick={toggleSearch} className="md:hidden p-2 rounded-full hover:bg-amber-100 transition" aria-label="Search">
@@ -94,9 +94,9 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <NavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</NavLink>
+            <NavLink to="/feed" icon={<RiDashboardLine />}>Feed</NavLink>
             <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
-            <NavLink to="/share">New Post</NavLink>
+            <NavLink to="/newpost">New Post</NavLink>
             <NavLink to="/learning">Learning Plans</NavLink>
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">
