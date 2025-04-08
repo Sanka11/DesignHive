@@ -9,6 +9,8 @@ import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import Home from "./pages/Home";
+import Feed from "./pages/Feed";
+import Post from "./pages/Post";
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/Feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+        <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
        
         {/* Add more routes here under the Navbar layout */}
       </Route>
