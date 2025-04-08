@@ -69,7 +69,7 @@
             <artifactId>firebase-admin</artifactId>
             <version>9.1.1</version>
         </dependency>
-		
+
 
 
 		<!-- Annotation Processor for Lombok -->
@@ -97,10 +97,6 @@
 			<scope>runtime</scope>
 		</dependency>
 
-
-
-		
-		
 	</dependencies>
 
 	<build>
