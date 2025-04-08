@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "../api/axios";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../auth/useAuth"; 
 import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -15,10 +15,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [notification, setNotification] = useState({ 
-    show: false, 
-    message: '', 
-    type: '' 
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: ''
   });
 
   useState(() => {
@@ -27,29 +27,41 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await axios.post("/auth/login", { email, password });
-    if (!res.data.startsWith("Invalid")) {
-      await login(res.data); // JWT login
-      
-      if (rememberMe) {
-        localStorage.setItem('rememberedEmail', email);
+
+    try {
+      const res = await axios.post("/auth/login", { email, password });
+
+      if (!res.data.startsWith("Invalid")) {
+        const token = res.data;
+        await login(token); // ✅ Load user and store it in localStorage inside AuthContext
+
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+
+        setNotification({
+          show: true,
+          message: 'Login successful!',
+          type: 'success'
+        });
+
+        setTimeout(() => {
+          navigate("/feed");
+        }, 1500);
       } else {
-        localStorage.removeItem('rememberedEmail');
+        setNotification({
+          show: true,
+          message: res.data,
+          type: 'error'
+        });
       }
-      
+    } catch (err) {
+      console.error("Login error:", err);
       setNotification({
         show: true,
-        message: 'Login successful!',
-        type: 'success'
-      });
-      
-      setTimeout(() => {
-        navigate("/home"); // Redirect to dashboard after 1.5 seconds
-      }, 1500);
-    } else {
-      setNotification({
-        show: true,
-        message: res.data,
+        message: "Login failed. Please try again.",
         type: 'error'
       });
     }

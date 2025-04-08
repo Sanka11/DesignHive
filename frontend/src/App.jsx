@@ -14,6 +14,9 @@ import ChatPage from "./pages/ChatPage";
 import MyChats from "./pages/MyChats";
 import Feed from "./pages/Feed";
 import Post from "./pages/Post";
+import NewPost from "./pages/NewPost";
+import NewPostPage from "./pages/NewPostPage";
+import OAuthRedirect from "./pages/OAuthRedirect";
 
 function App() {
   const { user } = useAuth(); // ✅ this defines user!
@@ -24,11 +27,10 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/" element={<LandingPage />} />
+      <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
       <Route path="/chat/:chatId" element={<ChatPage currentUser={user} />} />
       <Route path="/my-chats" element={<MyChats />} />
-
-
-      
+        
 
       {/* Pages with Navbar */}
       <Route element={<MainLayout />}>
@@ -37,7 +39,8 @@ function App() {
 
         <Route path="/Feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
         <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
-       
+        <Route path="/newpost" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
+
         {/* Add more routes here under the Navbar layout */}
       </Route>
 

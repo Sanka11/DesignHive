@@ -1,12 +1,14 @@
 import { useState } from "react";
 import axios from "../api/axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../auth/useAuth"; 
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
 
 export default function Register() {
+  const { login } = useAuth(); 
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -33,7 +35,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-  
+
     Object.entries(formData).forEach(([key, value]) => {
       if (key === "profileImage") {
         if (value) data.append(key, value);
@@ -41,18 +43,22 @@ export default function Register() {
         data.append(key, value);
       }
     });
-  
+
     try {
       const res = await axios.post("/auth/register", data);
+
       if (!res.data.startsWith("Email")) {
         setNotification({
           show: true,
           message: '✅ Registration successful!',
           type: 'success'
         });
-        
+
+        // ✅ Automatically login the user using the returned JWT
+        await login(res.data);
+
         setTimeout(() => {
-          navigate("/login");
+          navigate("/feed");
         }, 1500);
       } else {
         setNotification({

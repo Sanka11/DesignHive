@@ -58,12 +58,14 @@ public class PostController {
     public ResponseEntity<?> createPost(@RequestBody Map<String, String> body) {
         try {
             String content = body.get("content");
-            Map<String, Object> newPost = postService.createPost(content);
+            String authorEmail = body.get("authorEmail");
+            String authorUsername = body.get("authorUsername");
+            String authorId = body.get("authorId");
+
+            Map<String, Object> newPost = postService.createPost(content, authorEmail, authorUsername, authorId);
             return ResponseEntity.ok(newPost);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error creating post");
         }
     }
 }
-
-
