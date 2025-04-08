@@ -29,7 +29,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/api/user/me").authenticated()
                         .requestMatchers("/api/user/profile").permitAll()
-
                         .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex
                         // 🔐 Respond with 401 for unauthenticated REST API requests
