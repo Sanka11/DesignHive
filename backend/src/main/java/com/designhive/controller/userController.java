@@ -28,7 +28,7 @@ import com.designhive.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/user")
-public class UserController {
+public class userController {
 
     @Autowired
     private UserRepository userRepository;
