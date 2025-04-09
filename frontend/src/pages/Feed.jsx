@@ -10,9 +10,14 @@ const Feed = () => {
   const fetchPosts = async () => {
     try {
       const res = await axios.get("http://localhost:9090/api/posts");
-      setPosts(res.data);
+      const sortedPosts = res.data.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt);
+        const dateB = new Date(b.updatedAt || b.createdAt);
+        return dateB - dateA; // Latest first
+      });
+      setPosts(sortedPosts);
     } catch (err) {
-      console.error("Error fetching posts", err);
+      console.error("❌ Error fetching posts:", err);
     }
   };
 
@@ -20,7 +25,7 @@ const Feed = () => {
     try {
       const storedUser = localStorage.getItem("loggedInUser");
       if (!storedUser) {
-        console.warn("⚠️ No loggedInUser found in localStorage");
+        console.warn("⚠️ No 'loggedInUser' found in localStorage.");
         return;
       }
 
@@ -29,7 +34,7 @@ const Feed = () => {
         console.log("✅ Loaded user from localStorage:", parsed);
         setUser(parsed);
       } else {
-        console.warn("⚠️ Invalid user format in localStorage", parsed);
+        console.warn("⚠️ Invalid user format in localStorage:", parsed);
       }
     } catch (err) {
       console.error("❌ Error parsing loggedInUser:", err);
@@ -42,13 +47,15 @@ const Feed = () => {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4">
       <h2 className="text-2xl font-bold my-4 text-center">News Feed</h2>
 
       {user ? (
         <NewPost user={user} refreshPosts={fetchPosts} />
       ) : (
-        <p className="text-center text-red-500">⚠️ User not loaded. Check localStorage.</p>
+        <p className="text-center text-red-500">
+          ⚠️ User not loaded. Check localStorage.
+        </p>
       )}
 
       {posts.length > 0 ? (

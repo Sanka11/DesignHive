@@ -1,32 +1,45 @@
 package com.designhive.entity;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Post {
+
     private String id;
+
     private String content;
     private int likes;
     private List<String> comments;
 
-    // New fields for author info
     private String authorEmail;
     private String authorUsername;
     private String authorId;
 
+    private List<String> mediaUrls;
+
+    private List<String> designDisciplines;
+    private List<String> designProcess;
+    private List<String> tools;
+    private List<String> learningGoals;
+    private String skillLevel;
+    private List<String> competitionInvolvement;
+
+    private Date createdAt;
+
     public Post() {
         this.likes = 0;
         this.comments = new ArrayList<>();
+        this.mediaUrls = new ArrayList<>();
+        this.designDisciplines = new ArrayList<>();
+        this.designProcess = new ArrayList<>();
+        this.tools = new ArrayList<>();
+        this.learningGoals = new ArrayList<>();
+        this.competitionInvolvement = new ArrayList<>();
+        this.createdAt = new Date();
     }
 
-    public Post(String id, String content) {
-        this.id = id;
-        this.content = content;
-        this.likes = 0;
-        this.comments = new ArrayList<>();
-    }
-
-    // Getters and Setters for existing fields
+    // Getters and setters
     public String getId() {
         return id;
     }
@@ -59,7 +72,6 @@ public class Post {
         this.comments = comments;
     }
 
-    // Getters and Setters for new fields
     public String getAuthorEmail() {
         return authorEmail;
     }
@@ -82,5 +94,69 @@ public class Post {
 
     public void setAuthorId(String authorId) {
         this.authorId = authorId;
+    }
+
+    public List<String> getMediaUrls() {
+        return mediaUrls;
+    }
+
+    public void setMediaUrls(List<String> mediaUrls) {
+        this.mediaUrls = mediaUrls;
+    }
+
+    public List<String> getDesignDisciplines() {
+        return designDisciplines;
+    }
+
+    public void setDesignDisciplines(List<String> designDisciplines) {
+        this.designDisciplines = designDisciplines;
+    }
+
+    public List<String> getDesignProcess() {
+        return designProcess;
+    }
+
+    public void setDesignProcess(List<String> designProcess) {
+        this.designProcess = designProcess;
+    }
+
+    public List<String> getTools() {
+        return tools;
+    }
+
+    public void setTools(List<String> tools) {
+        this.tools = tools;
+    }
+
+    public List<String> getLearningGoals() {
+        return learningGoals;
+    }
+
+    public void setLearningGoals(List<String> learningGoals) {
+        this.learningGoals = learningGoals;
+    }
+
+    public String getSkillLevel() {
+        return skillLevel;
+    }
+
+    public void setSkillLevel(String skillLevel) {
+        this.skillLevel = skillLevel;
+    }
+
+    public List<String> getCompetitionInvolvement() {
+        return competitionInvolvement;
+    }
+
+    public void setCompetitionInvolvement(List<String> competitionInvolvement) {
+        this.competitionInvolvement = competitionInvolvement;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }

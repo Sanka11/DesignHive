@@ -1,134 +1,262 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
+
+const DEFAULT_PROFILE_PIC = "/assets/my-default.png";
 
 const Post = ({ post }) => {
-    if (!post) return null;
+  if (!post) return null;
+
+  const {
+    id,
+    content,
+    authorUsername,
+    authorEmail,
+    mediaUrls = [],
+    designDisciplines = [],
+    designProcess = [],
+    tools = [],
+    learningGoals = [],
+    competitionInvolvement = [],
+    skillLevel,
+    createdAt,
+  } = post;
+
+  const [likes, setLikes] = useState(post.likes || 0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [showComments, setShowComments] = useState(false);
+
+  const [modalMedia, setModalMedia] = useState({ isOpen: false, url: "", isVideo: false });
+
+  const handleOpenMedia = (url, isVideo) => {
+    setModalMedia({ isOpen: true, url, isVideo });
+  };
+
+  const handleCloseMedia = () => {
+    setModalMedia({ isOpen: false, url: "", isVideo: false });
+  };
+
+  const allTags = [
+    ...designDisciplines,
+    ...designProcess,
+    ...tools,
+    ...learningGoals,
+    ...competitionInvolvement,
+    ...(skillLevel ? [skillLevel] : []),
+  ];
+
+  // Load comments
+  useEffect(() => {
+    axios
+      .get(`http://localhost:9090/api/posts/${id}/comments`)
+      .then((res) => setComments(res.data))
+      .catch((err) => console.error("Error loading comments", err));
+  }, [id]);
+
+  // Load like state from localStorage
+  useEffect(() => {
+    const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
+    setIsLiked(likedPosts.includes(id));
+  }, [id]);
+
+  // Handle like with localStorage update
+  const handleLike = async () => {
+    try {
+      const res = await axios.post(`http://localhost:9090/api/posts/${id}/like`);
+      setLikes(res.data.likes);
+
+      const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
+      let updatedLikes;
+      if (isLiked) {
+        updatedLikes = likedPosts.filter((pid) => pid !== id);
+      } else {
+        updatedLikes = [...likedPosts, id];
+      }
+      localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
+      setIsLiked(!isLiked);
+    } catch (err) {
+      console.error("Error liking post", err);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (newComment.trim()) {
+      try {
+        const res = await axios.post(`http://localhost:9090/api/posts/${id}/comments`, {
+          text: newComment,
+        });
+        setComments([...comments, res.data]);
+        setNewComment("");
+      } catch (err) {
+        console.error("Error adding comment", err);
+      }
+    }
+  };
+
+  const getTimeDisplay = () => {
+    try {
+      const date = new Date(createdAt);
+      if (!isNaN(date)) {
+        return formatDistanceToNow(date, { addSuffix: true });
+      }
+    } catch (e) {}
+    return "Just now";
+  };
+
+  const getVideoMimeType = (url) => {
+    const extension = url.split(".").pop().split("?")[0].toLowerCase();
+    switch (extension) {
+      case "mp4":
+        return "video/mp4";
+      case "webm":
+        return "video/webm";
+      case "ogg":
+        return "video/ogg";
+      default:
+        return "";
+    }
+  };
   
-    const [likes, setLikes] = useState(post.likes || 0);
-    const [comments, setComments] = useState([]);
-    const [newComment, setNewComment] = useState("");
-    const [isLiked, setIsLiked] = useState(false);
-    const [showComments, setShowComments] = useState(false);
 
-    useEffect(() => {
-        axios.get(`http://localhost:9090/api/posts/${post.id}/comments`)
-            .then(res => setComments(res.data))
-            .catch(err => console.error("Error loading comments", err));
-    }, [post.id]);
-
-    const handleLike = async () => {
-        try {
-            const res = await axios.post(`http://localhost:9090/api/posts/${post.id}/like`);
-            setLikes(res.data.likes);
-            setIsLiked(!isLiked);
-        } catch (err) {
-            console.error("Error liking post", err);
-        }
-    };
-
-    const handleAddComment = async () => {
-        if (newComment.trim()) {
-            try {
-                const res = await axios.post(`http://localhost:9090/api/posts/${post.id}/comments`, {
-                    text: newComment
-                });
-                setComments([...comments, res.data]);
-                setNewComment("");
-            } catch (err) {
-                console.error("Error adding comment", err);
-            }
-        }
-    };
-
-    return (
-        <div className="bg-white rounded-lg shadow-md mb-4 border border-gray-200 max-w-2xl mx-auto">
-            {/* Post Header */}
-            <div className="flex items-center p-3 border-b border-gray-200">
-                <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
-                    </svg>
-                </div>
-                <div className="ml-2">
-                    <div className="font-semibold text-gray-900">{post.username}</div>
-                    <div className="text-xs text-gray-500">Just now</div>
-                </div>
-            </div>
-
-            {/* Post Content */}
-            <div className="p-3">
-                <p className="text-gray-800">{post.content}</p>
-            </div>
-
-            {/* Post Stats */}
-            <div className="px-3 py-2 border-t border-b border-gray-200 text-sm text-gray-500 flex justify-between">
-                <div>{likes} Likes</div>
-                <div>{comments.length} comments</div>
-            </div>
-
-            {/* Post Actions */}
-            <div className="flex justify-around p-1 text-gray-500">
-                <button 
-                    onClick={handleLike}
-                    className={`flex items-center justify-center w-full py-2 rounded-md hover:bg-gray-100 ${isLiked ? 'text-amber-600' : ''}`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                    </svg>
-                    Post
-                </button>
-                <button 
-                    onClick={() => setShowComments(!showComments)}
-                    className="flex items-center justify-center w-full py-2 rounded-md hover:bg-gray-100"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
-                    </svg>
-                    Comment
-                </button>
-                <button className="flex items-center justify-center w-full py-2 rounded-md hover:bg-gray-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                    </svg>
-                    Share
-                </button>
-            </div>
-
-            {/* Comments Section */}
-            {showComments && (
-                <div className="p-3 bg-gray-50">
-                    {/* Comment Input */}
-                    <div className="flex mb-3">
-                        <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
-                        <div className="ml-2 flex-1">
-                            <input
-                                type="text"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                className="w-full p-2 bg-gray-100 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-amber-200"
-                                placeholder="Write a comment..."
-                                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Comments List */}
-                    {comments.map(comment => (
-                        <div key={comment.id} className="flex mb-3">
-                            <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
-                            <div className="ml-2">
-                                <div className="bg-gray-100 p-2 rounded-2xl">
-                                    <div className="font-semibold text-sm">Commenter Name</div>
-                                    <p className="text-sm">{comment.text}</p>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1 ml-2">Like · Reply · Just now</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+  return (
+    <>
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center p-4 border-b border-gray-100">
+        <img
+          src={DEFAULT_PROFILE_PIC}
+          alt="User"
+          className="w-10 h-10 rounded-full border object-cover"
+        />
+        <div className="ml-3">
+          <p className="font-semibold text-gray-800">{authorUsername || authorEmail}</p>
+          <p className="text-xs text-gray-500">{getTimeDisplay()}</p>
         </div>
-    );
+      </div>
+
+      {/* Content */}
+      <div className="px-4 py-3">
+        <p className="text-gray-800 whitespace-pre-line">{content}</p>
+      </div>
+
+      {/* Tags */}
+      {allTags.length > 0 && (
+        <div className="px-4 flex flex-wrap gap-2 mb-4">
+          {allTags.map((tag, i) => (
+            <span
+              key={i}
+              className="bg-blue-50 text-blue-600 text-xs font-medium px-2 py-1 rounded-full border border-blue-100"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+     {/* Media */}
+     {mediaUrls.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-4 mb-4">
+            {mediaUrls.map((url, i) => {
+              const mimeType = getVideoMimeType(url);
+              const isVideo = mimeType !== "";
+
+              return (
+                <div key={i} className="rounded-md overflow-hidden border border-gray-200">
+                  {isVideo ? (
+                    <video controls className="w-full h-48 object-cover cursor-pointer" onClick={() => handleOpenMedia(url, true)}>
+                      <source src={url} type={mimeType} />
+                    </video>
+                  ) : (
+                    <img
+                      src={url}
+                      alt={`media-${i}`}
+                      className="w-full h-48 object-cover object-top cursor-pointer"
+                      onClick={() => handleOpenMedia(url, false)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      <div className="px-4 py-2 border-t border-b text-sm text-gray-500 flex justify-between">
+        <div>{likes} Likes</div>
+        <div>{comments.length} Comments</div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-around text-gray-600 px-2 py-1">
+        <button
+          onClick={handleLike}
+          className={`w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center ${
+            isLiked ? "text-amber-600" : ""
+          }`}
+        >
+          👍 Like
+        </button>
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center"
+        >
+          💬 Comment
+        </button>
+        <button className="w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center">
+          🔄 Share
+        </button>
+      </div>
+
+      {/* Comments */}
+      {showComments && (
+        <div className="p-4 bg-gray-50 border-t border-gray-100">
+          {/* Comment Input */}
+          <div className="flex mb-3">
+            <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
+            <div className="ml-2 flex-1">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write a comment..."
+                onKeyPress={(e) => e.key === "Enter" && handleAddComment()}
+                className="w-full px-4 py-2 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              />
+            </div>
+          </div>
+
+          {/* Comment List */}
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex mb-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
+              <div className="ml-2">
+                <div className="bg-white p-3 rounded-2xl border border-gray-100">
+                  <div className="font-semibold text-sm text-gray-800">
+                    {comment.username || "User"}
+                  </div>
+                  <p className="text-sm text-gray-700">{comment.text}</p>
+                </div>
+                <div className="text-xs text-gray-500 mt-1 ml-2">
+                  Like · Reply · Just now
+                </div>
+              </div>
+            </div>
+          ))}
+          
+        </div>
+      )}
+      </div>
+      
+      {modalMedia.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50" onClick={handleCloseMedia}>
+          <div className="relative bg-transparent max-w-3xl mx-auto rounded-lg overflow-hidden">
+            <button onClick={handleCloseMedia} className="absolute top-2 right-2 text-white text-2xl">&times;</button>
+            {modalMedia.isVideo ? <video controls autoPlay className="max-h-[80vh]"><source src={modalMedia.url} type={getVideoMimeType(modalMedia.url)} /></video> : <img src={modalMedia.url} className="max-h-[80vh]" />}
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default Post;
