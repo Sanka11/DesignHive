@@ -1,5 +1,6 @@
 package com.designhive.controller;
 
+import com.designhive.entity.Post;
 import com.designhive.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,12 +10,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "http://localhost:5173") // Allow frontend requests
+@CrossOrigin(origins = "http://localhost:5173") // Update to frontend origin
 public class PostController {
 
     @Autowired
     private PostService postService;
 
+    // Get all posts
     @GetMapping
     public ResponseEntity<?> getPosts() {
         try {
@@ -24,7 +26,7 @@ public class PostController {
         }
     }
 
-    // Like a post endpoint
+    // Like a post
     @PostMapping("/{id}/like")
     public ResponseEntity<?> likePost(@PathVariable String id) {
         try {
@@ -35,6 +37,7 @@ public class PostController {
         }
     }
 
+    // Add a comment to a post
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(@PathVariable String id, @RequestBody Map<String, String> body) {
         try {
@@ -45,6 +48,7 @@ public class PostController {
         }
     }
 
+    // Get comments for a post
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getComments(@PathVariable String id) {
         try {
@@ -54,17 +58,14 @@ public class PostController {
         }
     }
 
+    // ✅ Create a new post with full Post object (including media, tags, etc.)
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> createPost(@RequestBody Post post) {
         try {
-            String content = body.get("content");
-            String authorEmail = body.get("authorEmail");
-            String authorUsername = body.get("authorUsername");
-            String authorId = body.get("authorId");
-
-            Map<String, Object> newPost = postService.createPost(content, authorEmail, authorUsername, authorId);
-            return ResponseEntity.ok(newPost);
+            Post savedPost = postService.createPost(post);
+            return ResponseEntity.ok(savedPost);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Error creating post");
         }
     }
