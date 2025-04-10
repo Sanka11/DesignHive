@@ -30,6 +30,8 @@ function App() {
       <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
       <Route path="/chat/:chatId" element={<ChatPage currentUser={user} />} />
       <Route path="/my-chats" element={<MyChats />} />
+      <Route path="/chat" element={<ChatPage currentUser={user} />} />
+
         
 
       {/* Pages with Navbar */}

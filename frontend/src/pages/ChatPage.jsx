@@ -2,11 +2,32 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import axios from "../api/axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiMessageSquare, FiSearch, FiUser, FiHome, FiEdit2, FiTrash2, FiX, FiCheck } from "react-icons/fi";
+import { FiSend, FiMessageSquare, FiSearch, FiUser, FiHome, FiEdit2, FiTrash2, FiX, FiCheck, FiUsers, FiPlus } from "react-icons/fi";
 import { GiHoneycomb } from "react-icons/gi";
 import { FaUserCircle } from "react-icons/fa";
 
 export default function ChatPage({ currentUser }) {
+  // Handle null currentUser
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center p-6 max-w-md">
+          <FiUser className="text-5xl text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-700 mb-2">Authentication Required</h3>
+          <p className="text-gray-500 mb-6">
+            You need to be logged in to access your chats
+          </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const { chatId } = useParams();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
@@ -18,6 +39,9 @@ export default function ChatPage({ currentUser }) {
   const [isEditing, setIsEditing] = useState(null);
   const [editText, setEditText] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [showUserSelection, setShowUserSelection] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -61,6 +85,11 @@ export default function ChatPage({ currentUser }) {
 
     if (chatId) {
       fetchMessages();
+    } else {
+      // Reset chat-specific state when no chat is selected
+      setMessages([]);
+      setOtherUserEmail("");
+      setOtherUserName("");
     }
   }, [chatId, currentUser.email]);
 
@@ -80,14 +109,68 @@ export default function ChatPage({ currentUser }) {
     }
   }, [currentUser]);
 
+  // Fetch available users (excluding current user and existing chats)
+  useEffect(() => {
+    const fetchAvailableUsers = async () => {
+      try {
+        const res = await axios.get('/users');
+        const existingChatUsers = userChats.map(chat => 
+          chat.chatId.split("_").find(email => email !== currentUser.email)
+        );
+        
+        const filteredUsers = res.data.filter(user => 
+          user.email !== currentUser.email && 
+          !existingChatUsers.includes(user.email)
+        );
+        
+        setAvailableUsers(filteredUsers);
+      } catch (err) {
+        console.error("Error fetching available users:", err);
+      }
+    };
+
+    if (showUserSelection && currentUser?.email) {
+      fetchAvailableUsers();
+    }
+  }, [showUserSelection, userChats, currentUser.email]);
+
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Start a new chat with selected user
+  const startNewChat = async (userEmail) => {
+    try {
+      // Create a unique chat ID by combining emails in alphabetical order
+      const chatIdentifier = [currentUser.email, userEmail].sort().join('_');
+      
+      // Check if chat already exists
+      const existingChat = userChats.find(chat => chat.chatId === chatIdentifier);
+      
+      if (existingChat) {
+        navigate(`/chat/${chatIdentifier}`);
+      } else {
+        // Create new chat
+        await axios.post('/chats', {
+          participants: [currentUser.email, userEmail],
+          startedBy: currentUser.email
+        });
+        
+        // Navigate to the new chat
+        navigate(`/chat/${chatIdentifier}`);
+      }
+      
+      setShowUserSelection(false);
+      setUserSearchTerm("");
+    } catch (err) {
+      console.error("Error creating new chat:", err);
+    }
+  };
+
   // Send a message
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !chatId) return;
 
     try {
       await axios.post(`/chats/${chatId}/messages`, {
@@ -105,7 +188,7 @@ export default function ChatPage({ currentUser }) {
         },
       ]);
       setNewMessage("");
-      inputRef.current.focus();
+      inputRef.current?.focus();
     } catch (err) {
       console.error("Error sending message:", err);
     }
@@ -125,7 +208,7 @@ export default function ChatPage({ currentUser }) {
 
   // Save edited message
   const saveEdit = async () => {
-    if (!editText.trim()) return;
+    if (!editText.trim() || !chatId) return;
 
     try {
       await axios.put(`/chats/${chatId}/messages/${isEditing}`, { 
@@ -148,6 +231,8 @@ export default function ChatPage({ currentUser }) {
 
   // Delete a message
   const handleDelete = async (messageId) => {
+    if (!chatId) return;
+    
     try {
       await axios.delete(`/chats/${chatId}/messages/${messageId}`);
       setShowDeleteConfirm(null);
@@ -199,6 +284,12 @@ export default function ChatPage({ currentUser }) {
     return other.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // Filter available users based on search term
+  const filteredAvailableUsers = availableUsers.filter(user => 
+    user.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
+  );
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -209,13 +300,22 @@ export default function ChatPage({ currentUser }) {
               <GiHoneycomb className="text-2xl text-amber-600 mr-2" />
               <h2 className="text-xl font-bold text-gray-800">Your Chats</h2>
             </div>
-            <Link 
-              to="/home" 
-              className="p-2 text-gray-500 hover:text-amber-600 rounded-full hover:bg-amber-50"
-              title="Back to Home"
-            >
-              <FiHome size={20} />
-            </Link>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowUserSelection(true)}
+                className="p-2 text-gray-500 hover:text-amber-600 rounded-full hover:bg-amber-50"
+                title="New Chat"
+              >
+                <FiPlus size={20} />
+              </button>
+              <Link 
+                to="/feed" 
+                className="p-2 text-gray-500 hover:text-amber-600 rounded-full hover:bg-amber-50"
+                title="Back to Home"
+              >
+                <FiHome size={20} />
+              </Link>
+            </div>
           </div>
           <div className="relative">
             <FiSearch className="absolute left-3 top-3 text-gray-400" />
@@ -285,7 +385,7 @@ export default function ChatPage({ currentUser }) {
                   </div>
                 </div>
                 <Link 
-                  to="/home" 
+                  to="/feed" 
                   className="p-2 text-gray-500 hover:text-amber-600 rounded-full hover:bg-amber-50"
                   title="Back to Home"
                 >
@@ -425,23 +525,124 @@ export default function ChatPage({ currentUser }) {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex-1 flex flex-col items-center justify-center bg-gray-50">
             <div className="text-center p-6 max-w-md">
-              <FiMessageSquare className="text-5xl text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-700 mb-2">No Chat Selected</h3>
+              <FiUsers className="text-5xl text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-700 mb-2">Welcome to Chats</h3>
               <p className="text-gray-500 mb-6">
-                Select a chat from the sidebar or start a new conversation
+                Select a conversation from the sidebar to start chatting, or create a new chat
               </p>
-              <Link
-                to="/home"
-                className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-              >
-                <FiHome className="mr-2" /> Back to Home
-              </Link>
+              
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-medium text-gray-700 mb-3">Your Recent Chats</h4>
+                {filteredChats.length > 0 ? (
+                  <ul className="space-y-2">
+                    {filteredChats.slice(0, 3).map(chat => {
+                      const other = chat.chatId.split("_").find(email => email !== currentUser.email);
+                      return (
+                        <li key={chat.chatId}>
+                          <button
+                            onClick={() => navigate(`/chat/${chat.chatId}`)}
+                            className="w-full text-left p-2 hover:bg-amber-50 rounded-lg transition-colors flex items-center"
+                          >
+                            <FaUserCircle className="text-gray-400 mr-3" />
+                            <span className="truncate">{other}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-sm">No recent chats</p>
+                )}
+              </div>
+              
+              <div className="mt-6 flex justify-center space-x-4">
+                <Link
+                  to="/feed"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <FiHome className="mr-2" /> Back to Home
+                </Link>
+                {/* <button
+                  onClick={() => setShowUserSelection(true)}
+                  className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  <FiPlus className="mr-2" /> New Chat
+                </button> */}
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* User Selection Modal */}
+      <AnimatePresence>
+        {showUserSelection && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 max-h-[80vh] flex flex-col"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">Start New Chat</h3>
+                <button
+                  onClick={() => {
+                    setShowUserSelection(false);
+                    setUserSearchTerm("");
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              
+              <div className="relative mb-4">
+                <FiSearch className="absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-amber-400"
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                {filteredAvailableUsers.length === 0 ? (
+                  <div className="text-center text-gray-500 py-4">
+                    {userSearchTerm ? "No matching users found" : "No available users"}
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {filteredAvailableUsers.map(user => (
+                      <li key={user.email}>
+                        <button
+                          onClick={() => startNewChat(user.email)}
+                          className="w-full text-left p-3 hover:bg-amber-50 rounded-lg transition-colors flex items-center"
+                        >
+                          <FaUserCircle className="text-gray-400 text-xl mr-3" />
+                          <div>
+                            <p className="font-medium text-gray-800">{user.username || user.email.split('@')[0]}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
