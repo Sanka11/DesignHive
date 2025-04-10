@@ -24,6 +24,7 @@ public class Post {
     private List<String> learningGoals;
     private String skillLevel;
     private List<String> competitionInvolvement;
+    private String profileImagePath;
 
     private Date createdAt;
 
@@ -159,4 +160,13 @@ public class Post {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
 }

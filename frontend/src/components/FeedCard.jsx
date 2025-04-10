@@ -1,15 +1,25 @@
 // src/components/FeedCard.jsx
 import React from "react";
 
+const DEFAULT_PROFILE_PIC = "/assets/my-default.png";
+
+
 const FeedCard = ({ post }) => {
   return (
     <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-100">
       <div className="flex items-center p-4 space-x-4">
-        <img
-          src={post.user.avatar}
-          alt={post.user.name}
-          className="w-12 h-12 rounded-full object-cover"
-        />
+      <img
+  src={post.user?.avatar || "/assets/default-profile.png"}
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = "/assets/default-profile.png";
+  }}
+  alt={post.user?.name}
+  className="w-10 h-10 rounded-full object-cover"
+/>
+
+
+
         <div>
           <h2 className="font-semibold">{post.user.name}</h2>
           <p className="text-sm text-gray-500">Just now</p>

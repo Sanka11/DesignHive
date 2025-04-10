@@ -801,7 +801,7 @@ export default function Profile() {
               </button>
             </div>
             <Link 
-              to="/home" 
+              to="/feed" 
               className="bg-white border border-amber-500 text-amber-600 hover:bg-amber-50 font-medium py-3 px-6 rounded-lg transition-colors text-center"
             >
               Back to Home

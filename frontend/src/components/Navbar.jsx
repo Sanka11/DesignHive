@@ -96,7 +96,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             <NavLink to="/feed" icon={<RiDashboardLine />}>Feed</NavLink>
             <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
-            <NavLink to="/newpost">New Post</NavLink>
+            <NavLink to="/newpost">Manage Posts</NavLink>
             <NavLink to="/learning">Learning Plans</NavLink>
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">
@@ -194,7 +194,7 @@ const Navbar = () => {
               </div>
               <MobileNavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</MobileNavLink>
               <MobileNavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</MobileNavLink>
-              <MobileNavLink to="/share">New Post</MobileNavLink>
+              <MobileNavLink to="/share">Manage Posts</MobileNavLink>
               <MobileNavLink to="/learning">Learning Plans</MobileNavLink>
               <div className="pt-2 border-t border-amber-200">
                 <MobileNavLink to="/profile" icon={<FaUser />}>Profile</MobileNavLink>

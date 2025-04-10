@@ -102,18 +102,20 @@ const NewPost = ({ user, refreshPosts }) => {
       toast.error("Content cannot be empty.");
       return;
     }
-
+  
     try {
       setIsPosting(true);
+      toast.loading("Uploading your post...");
+  
       const mediaUrls = [];
-
+  
       for (let file of mediaFiles) {
         const fileRef = ref(storage, `posts/${user.id}/${Date.now()}_${file.name}`);
         const snapshot = await uploadBytes(fileRef, file);
         const url = await getDownloadURL(snapshot.ref);
         mediaUrls.push(url);
       }
-
+  
       await axios.post("http://localhost:9090/api/posts", {
         content,
         authorEmail: user?.email || "anonymous",
@@ -127,17 +129,21 @@ const NewPost = ({ user, refreshPosts }) => {
         competitionInvolvement,
         mediaUrls,
       });
-
-      toast.success("Post created successfully!");
+  
+      toast.dismiss(); // remove loading
+      toast.success("✅ Post created successfully!");
+  
       resetForm();
       refreshPosts();
     } catch (err) {
+      toast.dismiss();
       console.error("Error posting:", err);
-      toast.error("Failed to post. Try again.");
+      toast.error("❌ Failed to post. Please try again.");
     } finally {
       setIsPosting(false);
     }
   };
+  
 
   const toOptionList = (list) => list.map((x) => ({ label: x, value: x }));
 

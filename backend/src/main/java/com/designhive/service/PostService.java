@@ -3,7 +3,6 @@ package com.designhive.service;
 import com.designhive.entity.Post;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
-// For Query.Direction.DESC
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.stereotype.Service;
@@ -23,13 +22,49 @@ public class PostService {
         List<QueryDocumentSnapshot> documents = query.get().getDocuments();
         List<Map<String, Object>> posts = new ArrayList<>();
 
+        // Step 1: Collect all unique authorIds
+        Set<String> uniqueAuthorIds = documents.stream()
+                .map(doc -> (String) doc.getString("authorId"))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // Step 2: Fetch all users in one batch query
+        Map<String, DocumentSnapshot> userDocsById = new HashMap<>();
+        for (String authorId : uniqueAuthorIds) {
+            List<QueryDocumentSnapshot> userQuery = firestore
+                    .collection("users")
+                    .whereEqualTo("id", authorId)
+                    .limit(1)
+                    .get()
+                    .get()
+                    .getDocuments();
+            if (!userQuery.isEmpty()) {
+                userDocsById.put(authorId, userQuery.get(0));
+            }
+        }
+
         for (QueryDocumentSnapshot doc : documents) {
             Map<String, Object> post = doc.getData();
             post.put("id", doc.getId());
+
+            String authorEmail = (String) post.get("authorEmail");
+            String authorId = (String) post.get("authorId");
+            String authorUsername = (String) post.get("authorUsername");
+
+            // Inject user info
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("name", authorUsername != null ? authorUsername : authorEmail);
+            userMap.put("email", authorEmail);
+
+            DocumentSnapshot userDoc = userDocsById.get(authorId);
+            if (userDoc != null && userDoc.exists() && userDoc.contains("profileImagePath")) {
+                userMap.put("avatar", userDoc.getString("profileImagePath"));
+            }
+
+            post.put("user", userMap);
             posts.add(post);
         }
 
-        // Optional: sort manually by createdAt
         posts.sort((a, b) -> {
             Timestamp t1 = (Timestamp) a.get("createdAt");
             Timestamp t2 = (Timestamp) b.get("createdAt");
@@ -39,7 +74,6 @@ public class PostService {
         return posts;
     }
 
-    // ✅ Like a post (transactional)
     public long likePost(String postId) throws ExecutionException, InterruptedException {
         DocumentReference postRef = firestore.collection("posts").document(postId);
         return firestore.runTransaction(transaction -> {
@@ -51,7 +85,6 @@ public class PostService {
         }).get();
     }
 
-    // ✅ Add comment to a post (subcollection)
     public void addComment(String postId, String comment) throws ExecutionException, InterruptedException {
         firestore.collection("posts")
                 .document(postId)
@@ -61,7 +94,6 @@ public class PostService {
                         "createdAt", Timestamp.now()));
     }
 
-    // ✅ Fetch all comments for a post
     public List<Map<String, Object>> getComments(String postId) throws ExecutionException, InterruptedException {
         ApiFuture<QuerySnapshot> query = firestore.collection("posts")
                 .document(postId)
@@ -78,33 +110,29 @@ public class PostService {
                 }).collect(Collectors.toList());
     }
 
+    public void editComment(String postId, String commentId, String updatedText)
+            throws ExecutionException, InterruptedException {
+        DocumentReference commentRef = firestore.collection("posts")
+                .document(postId)
+                .collection("comments")
+                .document(commentId);
 
-// ✅ Edit a comment on a post
-public void editComment(String postId, String commentId, String updatedText) throws ExecutionException, InterruptedException {
-    DocumentReference commentRef = firestore.collection("posts")
-            .document(postId)
-            .collection("comments")
-            .document(commentId);
+        Map<String, Object> updateData = new HashMap<>();
+        updateData.put("text", updatedText);
+        updateData.put("editedAt", Timestamp.now());
 
-    Map<String, Object> updateData = new HashMap<>();
-    updateData.put("text", updatedText);
-    updateData.put("editedAt", Timestamp.now());
+        commentRef.update(updateData).get();
+    }
 
-    commentRef.update(updateData).get();
-}
+    public void deleteComment(String postId, String commentId) throws ExecutionException, InterruptedException {
+        DocumentReference commentRef = firestore.collection("posts")
+                .document(postId)
+                .collection("comments")
+                .document(commentId);
 
-// ✅ Delete a comment from a post
-public void deleteComment(String postId, String commentId) throws ExecutionException, InterruptedException {
-    DocumentReference commentRef = firestore.collection("posts")
-            .document(postId)
-            .collection("comments")
-            .document(commentId);
+        commentRef.delete().get();
+    }
 
-    commentRef.delete().get();
-}
-
-
-    // ✅ Create a new Post with all fields
     public Post createPost(Post post) throws ExecutionException, InterruptedException {
         post.setLikes(0);
         post.setCreatedAt(new Date());
