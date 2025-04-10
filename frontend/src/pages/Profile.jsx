@@ -59,9 +59,10 @@ export default function Profile() {
   });
 
   const [newImage, setNewImage] = useState(null);
-  const [preview, setPreview] = useState(
-    `http://localhost:9090${user.profileImagePath}`
-  );
+  const [preview, setPreview] = useState(user.profileImagePath);
+  // const [preview, setPreview] = useState(
+  //   `http://localhost:9090${user.profileImagePath}`
+  // );
 
   const [pendingRequests, setPendingRequests] = useState([]);
   const [followers, setFollowers] = useState([]);

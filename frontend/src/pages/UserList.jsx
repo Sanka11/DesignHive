@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
 import { sendFollowRequest } from "../api/followApi";
-import { 
-  FiUserPlus, 
-  FiUserCheck, 
-  FiX, 
+import {
+  FiUserPlus,
+  FiUserCheck,
+  FiX,
   FiMessageSquare,
   FiGlobe,
   FiCalendar,
@@ -14,10 +14,10 @@ import {
   FiBriefcase
 } from "react-icons/fi";
 import defaultProfilePic from "../assets/default-profile.png";
-import { 
-  FaBirthdayCake, 
-  FaPhone, 
-  FaMapMarkerAlt, 
+import {
+  FaBirthdayCake,
+  FaPhone,
+  FaMapMarkerAlt,
   FaVenusMars,
   FaUserPlus,
   FaUserCheck,
@@ -45,12 +45,12 @@ export default function UserList({ user }) {
   // Modal animation variants
   const modalVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
-        type: "spring", 
-        damping: 25, 
+      transition: {
+        type: "spring",
+        damping: 25,
         stiffness: 500,
         duration: 0.6
       }
@@ -65,7 +65,7 @@ export default function UserList({ user }) {
 
   const getProfilePic = (userData) => {
     if (userData?.profileImagePath) {
-      return `http://localhost:9090${userData.profileImagePath}`;
+      return userData.profileImagePath; // Using Firebase URL directly
     }
     return defaultProfilePic;
   };
@@ -76,7 +76,7 @@ export default function UserList({ user }) {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
@@ -87,13 +87,13 @@ export default function UserList({ user }) {
     try {
       const emails = [user.email, otherUserEmail].sort();
       const chatId = `${emails[0]}_${emails[1]}`;
-      
+
       await axios.post("/chats/start", {
         user1: user.email,
         user2: otherUserEmail,
         chatId: chatId
       });
-      
+
       navigate(`/chat/${chatId}`);
       closeModal();
     } catch (err) {
@@ -162,7 +162,7 @@ export default function UserList({ user }) {
     setSelectedUser(null);
   };
 
-  const filteredUsers = allUsers.filter(u => 
+  const filteredUsers = allUsers.filter(u =>
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -173,15 +173,15 @@ export default function UserList({ user }) {
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
   return (
-    <div className="md:w-[35%] relative">
+    <div className="md:w-[30%] relative">
       {/* Animated User Profile Modal */}
       <AnimatePresence>
         {isModalOpen && selectedUser && (
@@ -199,7 +199,7 @@ export default function UserList({ user }) {
               {/* Modal Header with Gradient Background */}
               <div className="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-white relative">
                 <div className="flex justify-between items-center">
-                  <button 
+                  <button
                     onClick={closeModal}
                     className="p-2 rounded-full hover:bg-amber-600 transition-colors"
                     aria-label="Close profile"
@@ -243,7 +243,7 @@ export default function UserList({ user }) {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="absolute top-4 right-4">
                   <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
                 </div>
@@ -255,7 +255,7 @@ export default function UserList({ user }) {
                   {/* Left Column - Avatar & Basic Info */}
                   <div className="flex flex-col items-center md:items-start w-full md:w-1/3">
                     <div className="relative w-48 h-48 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 mb-6 overflow-hidden border-4 border-white shadow-xl">
-                      <img 
+                      <img
                         src={getProfilePic(selectedUser)}
                         alt={selectedUser.username}
                         className="w-full h-full object-cover"
@@ -268,23 +268,23 @@ export default function UserList({ user }) {
                         <div className="absolute bottom-3 right-3 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       )}
                     </div>
-                    
+
                     <div className="text-center md:text-left w-full">
                       <h1 className="text-3xl font-bold text-gray-800">{selectedUser.username}</h1>
                       {selectedUser.title && (
                         <p className="text-amber-600 font-medium mt-1">{selectedUser.title}</p>
                       )}
-                      
+
                       {selectedUser.bio && (
                         <p className="text-gray-600 mt-4 text-center md:text-left">
                           {selectedUser.bio}
                         </p>
                       )}
-                      
+
                       {/* Social Links */}
                       {selectedUser.website && (
                         <div className="mt-4 flex items-center justify-center md:justify-start">
-                          <a 
+                          <a
                             href={selectedUser.website.startsWith('http') ? selectedUser.website : `https://${selectedUser.website}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -295,11 +295,11 @@ export default function UserList({ user }) {
                           </a>
                         </div>
                       )}
-                      
+
                       {/* Skills/Tags */}
                       <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-2">
                         {selectedUser.skills?.slice(0, 6).map((skill, index) => (
-                          <motion.span 
+                          <motion.span
                             key={index}
                             className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm"
                             whileHover={{ scale: 1.05 }}
@@ -326,7 +326,7 @@ export default function UserList({ user }) {
                             <span className="text-gray-800">{selectedUser.fullName}</span>
                           </div>
                         )}
-                        
+
                         <div className="flex items-start">
                           <IoMdMail className="text-amber-500 mr-2 mt-1" />
                           <div>
@@ -334,7 +334,7 @@ export default function UserList({ user }) {
                             <span className="text-gray-800">{selectedUser.email}</span>
                           </div>
                         </div>
-                        
+
                         {selectedUser.birthday && (
                           <div className="flex items-start">
                             <FaBirthdayCake className="text-amber-500 mr-2 mt-1" />
@@ -349,7 +349,7 @@ export default function UserList({ user }) {
                             </div>
                           </div>
                         )}
-                        
+
                         {selectedUser.gender && (
                           <div className="flex items-start">
                             <FaVenusMars className="text-amber-500 mr-2 mt-1" />
@@ -359,7 +359,7 @@ export default function UserList({ user }) {
                             </div>
                           </div>
                         )}
-                        
+
                         {selectedUser.location && (
                           <div className="flex items-start">
                             <FaMapMarkerAlt className="text-amber-500 mr-2 mt-1" />
@@ -369,7 +369,7 @@ export default function UserList({ user }) {
                             </div>
                           </div>
                         )}
-                        
+
                         {selectedUser.contactNo && (
                           <div className="flex items-start">
                             <FaPhone className="text-amber-500 mr-2 mt-1" />
@@ -402,7 +402,7 @@ export default function UserList({ user }) {
                         </h2>
                         <div className="flex flex-wrap gap-3">
                           {selectedUser.interests.split(',').map((interest, index) => (
-                            <motion.span 
+                            <motion.span
                               key={index}
                               className="bg-white text-amber-700 px-4 py-2 rounded-full text-sm shadow-sm flex items-center"
                               whileHover={{ scale: 1.05 }}
@@ -447,7 +447,7 @@ export default function UserList({ user }) {
                         </h2>
                         <div className="flex flex-wrap gap-2">
                           {selectedUser.preferences.map((pref, index) => (
-                            <motion.span 
+                            <motion.span
                               key={index}
                               className="bg-white text-amber-700 px-3 py-1 rounded-full text-sm shadow-sm flex items-center"
                               whileHover={{ scale: 1.05 }}
@@ -493,15 +493,15 @@ export default function UserList({ user }) {
             </h3>
             <ul className="space-y-3">
               {followingUsers.slice(0, 5).map((u) => (
-                <motion.li 
-                  key={u.email} 
+                <motion.li
+                  key={u.email}
                   className="flex items-center justify-between p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleUserClick(u)}
                   whileHover={{ x: 5 }}
                 >
                   <div className="flex items-center">
                     <div className="w-12 h-12 rounded-full bg-amber-100 mr-3 overflow-hidden border-2 border-white shadow">
-                      <img 
+                      <img
                         src={getProfilePic(u)}
                         alt={u.username}
                         className="w-full h-full object-cover"
@@ -531,7 +531,7 @@ export default function UserList({ user }) {
               ))}
             </ul>
             {followingUsers.length > 5 && (
-              <button 
+              <button
                 className="text-xs text-amber-600 mt-2 hover:underline"
                 onClick={() => setShowAllSuggestions(!showAllSuggestions)}
               >
@@ -551,15 +551,15 @@ export default function UserList({ user }) {
             {displayedSuggestions.map((u) => {
               const status = statuses[u.email] || "none";
               return (
-                <motion.li 
-                  key={u.email} 
+                <motion.li
+                  key={u.email}
                   className="flex items-center justify-between p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleUserClick(u)}
                   whileHover={{ x: 5 }}
                 >
                   <div className="flex items-center">
                     <div className="w-12 h-12 rounded-full bg-amber-100 mr-3 overflow-hidden border-2 border-white shadow">
-                      <img 
+                      <img
                         src={getProfilePic(u)}
                         alt={u.username}
                         className="w-full h-full object-cover"
@@ -609,7 +609,7 @@ export default function UserList({ user }) {
             })}
           </ul>
           {otherUsers.length > 5 && (
-            <button 
+            <button
               onClick={() => setShowAllSuggestions(!showAllSuggestions)}
               className="text-xs text-amber-600 mt-2 hover:underline"
             >
@@ -626,7 +626,7 @@ export default function UserList({ user }) {
             <a href="#" className="hover:underline hover:text-amber-600">Terms</a>
             <a href="#" className="hover:underline hover:text-amber-600">Privacy</a>
           </div>
-          <p>© {new Date().getFullYear()} DesignHive</p>
+          
         </div>
       </div>
     </div>

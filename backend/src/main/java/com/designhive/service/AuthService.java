@@ -26,6 +26,9 @@ public class AuthService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    @Autowired
+    private FirebaseStorageService firebaseStorageService; // inject your storage service
+
     public String register(String username, String email, String password, MultipartFile profileImage)
             throws Exception {
         User existing = userRepository.getUserByEmail(email);
@@ -37,22 +40,18 @@ public class AuthService {
         user.setId(UUID.randomUUID().toString());
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password)); // 👈 Hashed password
+        user.setPassword(passwordEncoder.encode(password));
 
-        // 🧠 Save image if provided
+        // Upload profile image to Firebase Storage
         if (profileImage != null && !profileImage.isEmpty()) {
-            String filename = UUID.randomUUID() + "_" + profileImage.getOriginalFilename();
-            Path filePath = Paths.get("E:\\DesignHive\\DesignHive\\backend\\src\\main\\resources\\static\\uploads",
-                    filename);
-            Files.copy(profileImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            user.setProfileImagePath("/uploads/" + filename);
+            String imageUrl = firebaseStorageService.uploadFile(profileImage);
+            user.setProfileImagePath(imageUrl);
         } else {
-            user.setProfileImagePath("/uploads/default.png");
+            user.setProfileImagePath("https://your-default-image-url.png");
         }
 
         userRepository.saveUser(user);
 
-        // ✅ Always return a valid token on success
         return jwtUtil.generateToken(email);
     }
 
