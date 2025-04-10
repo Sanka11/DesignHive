@@ -27,6 +27,8 @@ const Post = ({ post }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedCommentText, setEditedCommentText] = useState("");
 
   const [modalMedia, setModalMedia] = useState({ isOpen: false, url: "", isVideo: false });
 
@@ -47,33 +49,32 @@ const Post = ({ post }) => {
     ...(skillLevel ? [skillLevel] : []),
   ];
 
-  // Load comments
   useEffect(() => {
-    axios
-      .get(`http://localhost:9090/api/posts/${id}/comments`)
-      .then((res) => setComments(res.data))
-      .catch((err) => console.error("Error loading comments", err));
+    fetchComments();
   }, [id]);
 
-  // Load like state from localStorage
+  const fetchComments = async () => {
+    try {
+      const res = await axios.get(`http://localhost:9090/api/posts/${id}/comments`);
+      setComments(res.data);
+    } catch (err) {
+      console.error("Error loading comments", err);
+    }
+  };
+
   useEffect(() => {
     const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
     setIsLiked(likedPosts.includes(id));
   }, [id]);
 
-  // Handle like with localStorage update
   const handleLike = async () => {
     try {
       const res = await axios.post(`http://localhost:9090/api/posts/${id}/like`);
       setLikes(res.data.likes);
-
       const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
-      let updatedLikes;
-      if (isLiked) {
-        updatedLikes = likedPosts.filter((pid) => pid !== id);
-      } else {
-        updatedLikes = [...likedPosts, id];
-      }
+      const updatedLikes = isLiked
+        ? likedPosts.filter((pid) => pid !== id)
+        : [...likedPosts, id];
       localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
       setIsLiked(!isLiked);
     } catch (err) {
@@ -84,174 +85,225 @@ const Post = ({ post }) => {
   const handleAddComment = async () => {
     if (newComment.trim()) {
       try {
-        const res = await axios.post(`http://localhost:9090/api/posts/${id}/comments`, {
+        await axios.post(`http://localhost:9090/api/posts/${id}/comments`, {
           text: newComment,
         });
-        setComments([...comments, res.data]);
         setNewComment("");
+        fetchComments();
       } catch (err) {
         console.error("Error adding comment", err);
       }
     }
   };
 
+  const handleEditComment = async (commentId) => {
+    try {
+      await axios.put(`http://localhost:9090/api/posts/${id}/comments/${commentId}`, {
+        text: editedCommentText,
+      });
+      setEditingCommentId(null);
+      setEditedCommentText("");
+      fetchComments();
+    } catch (err) {
+      console.error("Error editing comment", err);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await axios.delete(`http://localhost:9090/api/posts/${id}/comments/${commentId}`);
+      fetchComments();
+    } catch (err) {
+      console.error("Error deleting comment", err);
+    }
+  };
+
   const getTimeDisplay = () => {
     try {
       const date = new Date(createdAt);
-      if (!isNaN(date)) {
-        return formatDistanceToNow(date, { addSuffix: true });
-      }
-    } catch (e) {}
-    return "Just now";
+      return !isNaN(date) ? formatDistanceToNow(date, { addSuffix: true }) : "Just now";
+    } catch (e) {
+      return "Just now";
+    }
   };
 
   const getVideoMimeType = (url) => {
-    const extension = url.split(".").pop().split("?")[0].toLowerCase();
-    switch (extension) {
-      case "mp4":
-        return "video/mp4";
-      case "webm":
-        return "video/webm";
-      case "ogg":
-        return "video/ogg";
-      default:
-        return "";
-    }
+    const ext = url.split(".").pop().split("?")[0].toLowerCase();
+    return { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg" }[ext] || "";
   };
-  
 
   return (
     <>
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center p-4 border-b border-gray-100">
-        <img
-          src={DEFAULT_PROFILE_PIC}
-          alt="User"
-          className="w-10 h-10 rounded-full border object-cover"
-        />
-        <div className="ml-3">
-          <p className="font-semibold text-gray-800">{authorUsername || authorEmail}</p>
-          <p className="text-xs text-gray-500">{getTimeDisplay()}</p>
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 max-w-2xl mx-auto">
+        {/* Post Header */}
+        <div className="flex items-center p-4 border-b">
+          <img src={DEFAULT_PROFILE_PIC} className="w-10 h-10 rounded-full border" />
+          <div className="ml-3">
+            <p className="font-semibold text-gray-800">{authorUsername || authorEmail}</p>
+            <p className="text-xs text-gray-500">{getTimeDisplay()}</p>
+          </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="px-4 py-3">
-        <p className="text-gray-800 whitespace-pre-line">{content}</p>
-      </div>
-
-      {/* Tags */}
-      {allTags.length > 0 && (
-        <div className="px-4 flex flex-wrap gap-2 mb-4">
-          {allTags.map((tag, i) => (
-            <span
-              key={i}
-              className="bg-blue-50 text-blue-600 text-xs font-medium px-2 py-1 rounded-full border border-blue-100"
-            >
-              #{tag}
-            </span>
-          ))}
+        {/* Post Content */}
+        <div className="px-4 py-3">
+          <p className="text-gray-800 whitespace-pre-line">{content}</p>
         </div>
-      )}
 
-     {/* Media */}
-     {mediaUrls.length > 0 && (
+        {/* Tags */}
+        {allTags.length > 0 && (
+          <div className="px-4 flex flex-wrap gap-2 mb-4">
+            {allTags.map((tag) => (
+              <span key={tag} className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Media */}
+        {mediaUrls.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-4 mb-4">
-            {mediaUrls.map((url, i) => {
+            {mediaUrls.map((url) => {
               const mimeType = getVideoMimeType(url);
               const isVideo = mimeType !== "";
-
               return (
-                <div key={i} className="rounded-md overflow-hidden border border-gray-200">
+                <div key={url} className="rounded-md overflow-hidden border">
                   {isVideo ? (
                     <video controls className="w-full h-48 object-cover cursor-pointer" onClick={() => handleOpenMedia(url, true)}>
                       <source src={url} type={mimeType} />
                     </video>
                   ) : (
-                    <img
-                      src={url}
-                      alt={`media-${i}`}
-                      className="w-full h-48 object-cover object-top cursor-pointer"
-                      onClick={() => handleOpenMedia(url, false)}
-                    />
+                    <img src={url} className="w-full h-48 object-cover cursor-pointer" onClick={() => handleOpenMedia(url, false)} />
                   )}
                 </div>
               );
             })}
           </div>
         )}
-      <div className="px-4 py-2 border-t border-b text-sm text-gray-500 flex justify-between">
-        <div>{likes} Likes</div>
-        <div>{comments.length} Comments</div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex justify-around text-gray-600 px-2 py-1">
-        <button
-          onClick={handleLike}
-          className={`w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center ${
-            isLiked ? "text-amber-600" : ""
-          }`}
-        >
-          👍 Like
-        </button>
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center"
-        >
-          💬 Comment
-        </button>
-        <button className="w-full py-2 rounded-md hover:bg-gray-100 flex items-center justify-center">
-          🔄 Share
-        </button>
-      </div>
-
-      {/* Comments */}
-      {showComments && (
-        <div className="p-4 bg-gray-50 border-t border-gray-100">
-          {/* Comment Input */}
-          <div className="flex mb-3">
-            <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
-            <div className="ml-2 flex-1">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                onKeyPress={(e) => e.key === "Enter" && handleAddComment()}
-                className="w-full px-4 py-2 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-200"
-              />
-            </div>
+        {/* Reactions */}
+        <div className="px-4 py-2 border-t border-b text-sm text-gray-500 flex justify-between">
+          <div className="flex items-center">
+            <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-1">👍</span>
+            <span>{likes} {likes === 1 ? 'Like' : 'Likes'}</span>
           </div>
+          <div className="hover:underline cursor-pointer" onClick={() => setShowComments(!showComments)}>
+            {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
+          </div>
+        </div>
 
-          {/* Comment List */}
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex mb-3">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex-shrink-0"></div>
-              <div className="ml-2">
-                <div className="bg-white p-3 rounded-2xl border border-gray-100">
-                  <div className="font-semibold text-sm text-gray-800">
-                    {comment.username || "User"}
-                  </div>
-                  <p className="text-sm text-gray-700">{comment.text}</p>
-                </div>
-                <div className="text-xs text-gray-500 mt-1 ml-2">
-                  Like · Reply · Just now
-                </div>
+        {/* Action Buttons */}
+        <div className="flex justify-around text-gray-600 px-2 py-1 border-b">
+          <button 
+            onClick={handleLike} 
+            className={`flex items-center justify-center w-full py-2 hover:bg-gray-100 rounded-md transition-colors ${isLiked ? "text-blue-600 font-medium" : ""}`}
+          >
+            <span className="mr-2 text-lg">{isLiked ? "👍" : "👍"}</span>
+            <span>Like</span>
+          </button>
+          <button 
+            onClick={() => setShowComments(!showComments)} 
+            className="flex items-center justify-center w-full py-2 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <span className="mr-2 text-lg">💬</span>
+            <span>Comment</span>
+          </button>
+          <button className="flex items-center justify-center w-full py-2 hover:bg-gray-100 rounded-md transition-colors">
+            <span className="mr-2 text-lg">🔄</span>
+            <span>Share</span>
+          </button>
+        </div>
+
+        {/* Comments */}
+        {showComments && (
+          <div className="p-4 bg-gray-50 border-t">
+            {/* Input */}
+            <div className="flex mb-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100"></div>
+              <div className="ml-2 flex-1">
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                  className="w-full px-4 py-2 rounded-full bg-white border"
+                  placeholder="Write a comment..."
+                />
               </div>
             </div>
-          ))}
-          
-        </div>
-      )}
+
+            {/* List */}
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex mb-3">
+                <div className="w-8 h-8 rounded-full bg-amber-100"></div>
+                <div className="ml-2 w-full">
+                  <div className="bg-white p-3 rounded-2xl border">
+                    <div className="font-semibold text-sm text-gray-800">
+                      {comment.authorUsername || comment.authorEmail || "User"}
+                    </div>
+
+                    {editingCommentId === comment.id ? (
+                      <>
+                        <textarea
+                          value={editedCommentText}
+                          onChange={(e) => setEditedCommentText(e.target.value)}
+                          className="w-full mt-2 p-2 border rounded"
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => handleEditComment(comment.id)}
+                            className="text-blue-600 text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(null);
+                              setEditedCommentText("");
+                            }}
+                            className="text-gray-500 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-700">{comment.text}</p>
+                        <div className="text-xs text-gray-500 mt-1 ml-2 flex gap-3">
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(comment.id);
+                              setEditedCommentText(comment.text);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button onClick={() => handleDeleteComment(comment.id)}>Delete</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      
+
+      {/* Modal */}
       {modalMedia.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50" onClick={handleCloseMedia}>
           <div className="relative bg-transparent max-w-3xl mx-auto rounded-lg overflow-hidden">
-            <button onClick={handleCloseMedia} className="absolute top-2 right-2 text-white text-2xl">&times;</button>
-            {modalMedia.isVideo ? <video controls autoPlay className="max-h-[80vh]"><source src={modalMedia.url} type={getVideoMimeType(modalMedia.url)} /></video> : <img src={modalMedia.url} className="max-h-[80vh]" />}
+            <button onClick={handleCloseMedia} className="absolute top-2 right-2 text-white text-2xl">
+              &times;
+            </button>
+            {modalMedia.isVideo ? (
+              <video controls autoPlay className="max-h-[80vh]">
+                <source src={modalMedia.url} type={getVideoMimeType(modalMedia.url)} />
+              </video>
+            ) : (
+              <img src={modalMedia.url} className="max-h-[80vh]" alt="modal media" />
+            )}
           </div>
         </div>
       )}
