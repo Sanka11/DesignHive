@@ -58,7 +58,7 @@ export default function Register() {
         await login(res.data);
 
         setTimeout(() => {
-          navigate("/feed");
+          navigate("/login");
         }, 1500);
       } else {
         setNotification({

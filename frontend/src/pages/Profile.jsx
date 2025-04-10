@@ -16,6 +16,38 @@ import {
   getFollowing,
 } from "../api/followApi";
 
+// Preferences options
+const PREFERENCES_OPTIONS = {
+  designDisciplines: [
+    "UI Design",
+    "UX Design",
+    "Interaction Design",
+    "Motion Design"
+  ],
+  designProcess: [
+    "Wireframing",
+    "Prototyping",
+    "Visual Design",
+    "UI Design Techniques"
+  ],
+  tools: [
+    "Figma",
+    "Adobe XD",
+    "Sketch"
+  ],
+  learningGoals: [
+    "Career Development",
+    "Improving UI/UX skills",
+    "Mastering Tools",
+    "Building Case Studies"
+  ],
+  skillLevel: [
+    "Beginner",
+    "Intermediate",
+    "Advanced"
+  ]
+};
+
 export default function Profile() {
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();
@@ -27,15 +59,17 @@ export default function Profile() {
   });
 
   const [newImage, setNewImage] = useState(null);
-  const [preview, setPreview] = useState(
-    `http://localhost:9090${user.profileImagePath}`
-  );
+  const [preview, setPreview] = useState(user.profileImagePath);
+  // const [preview, setPreview] = useState(
+  //   `http://localhost:9090${user.profileImagePath}`
+  // );
 
   const [pendingRequests, setPendingRequests] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [isFollowerModalOpen, setFollowerModalOpen] = useState(false);
   const [isFollowingModalOpen, setFollowingModalOpen] = useState(false);
+  const [isPendingRequestsModalOpen, setPendingRequestsModalOpen] = useState(false);
   const [notification, setNotification] = useState({ 
     show: false, 
     message: '', 
@@ -43,10 +77,39 @@ export default function Profile() {
   });
   const [isMounted, setIsMounted] = useState(false);
   const [isDeleteSectionOpen, setDeleteSectionOpen] = useState(false);
+  const [selectedPreferences, setSelectedPreferences] = useState({
+    designDisciplines: [],
+    designProcess: [],
+    tools: [],
+    learningGoals: [],
+    skillLevel: []
+  });
 
   useEffect(() => {
     setIsMounted(true);
     loadFollowData();
+    
+    // Initialize selected preferences from user data
+    if (user.preferences) {
+      const initialPrefs = {
+        designDisciplines: [],
+        designProcess: [],
+        tools: [],
+        learningGoals: [],
+        skillLevel: []
+      };
+      
+      user.preferences.forEach(pref => {
+        for (const category in PREFERENCES_OPTIONS) {
+          if (PREFERENCES_OPTIONS[category].includes(pref)) {
+            initialPrefs[category].push(pref);
+            break;
+          }
+        }
+      });
+      
+      setSelectedPreferences(initialPrefs);
+    }
   }, []);
 
   const calculateAge = (birthday) => {
@@ -133,6 +196,15 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Handle contact number validation
+    if (name === 'contactNo') {
+      // Only allow numbers and limit to 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      return;
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -144,25 +216,28 @@ export default function Profile() {
     }
   };
 
-  const handlePreferencesKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const newPref = e.target.value.trim();
-      if (newPref && !formData.preferences?.includes(newPref)) {
-        setFormData((prev) => ({
-          ...prev,
-          preferences: [...(prev.preferences || []), newPref],
-        }));
-        e.target.value = "";
+  const handlePreferencesChange = (category, value) => {
+    setSelectedPreferences(prev => {
+      const newSelected = { ...prev };
+      if (newSelected[category].includes(value)) {
+        newSelected[category] = newSelected[category].filter(item => item !== value);
+      } else {
+        newSelected[category] = [...newSelected[category], value];
       }
-    }
-  };
-
-  const removePreference = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferences: prev.preferences.filter((_, i) => i !== index),
-    }));
+      
+      // Update formData preferences by combining all selected preferences
+      const allPreferences = [];
+      for (const cat in newSelected) {
+        allPreferences.push(...newSelected[cat]);
+      }
+      
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        preferences: allPreferences
+      }));
+      
+      return newSelected;
+    });
   };
 
   const handleDateChange = (date) => {
@@ -178,13 +253,12 @@ export default function Profile() {
   };
 
   const validateContactNo = (number) => {
-    const regex = /^[0-9]{10,15}$/;
-    return regex.test(number);
+    return number.length === 10;
   };
 
   const handleSubmit = async () => {
     if (formData.contactNo && !validateContactNo(formData.contactNo)) {
-      showNotification('Please enter a valid contact number (10-15 digits)', 'error');
+      showNotification('Please enter a valid 10-digit contact number', 'error');
       return;
     }
 
@@ -310,33 +384,23 @@ export default function Profile() {
             animate={isMounted ? { opacity: 1 } : {}}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            {/* Pending Requests */}
+            {/* Pending Requests Notification */}
             {pendingRequests.length > 0 && (
               <motion.div 
-                className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200"
+                className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200 cursor-pointer"
                 initial={{ opacity: 0, y: 10 }}
                 animate={isMounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.4, duration: 0.4 }}
+                onClick={() => setPendingRequestsModalOpen(true)}
               >
-                <h3 className="text-lg font-semibold mb-3 text-amber-800 flex items-center">
-                  <FaUserFriends className="mr-2" />
-                  Pending Follow Requests ({pendingRequests.length})
-                </h3>
-                <div className="space-y-2">
-                  {pendingRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex justify-between items-center bg-white p-3 rounded-lg border border-amber-100"
-                    >
-                      <span className="font-medium text-gray-700">{req.senderEmail}</span>
-                      <button
-                        onClick={() => handleAccept(req.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
-                      >
-                        <FaCheck className="mr-1" /> Accept
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-amber-800 flex items-center">
+                    <FaUserFriends className="mr-2" />
+                    You have {pendingRequests.length} pending follow request{pendingRequests.length > 1 ? 's' : ''}
+                  </h3>
+                  <button className="text-amber-600 hover:text-amber-800">
+                    View all
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -359,6 +423,12 @@ export default function Profile() {
                 className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
               >
                 <FaUserFriends /> Following ({following.length})
+              </button>
+              <button
+                onClick={() => navigate('/sent-requests')}
+                className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
+              >
+                <FaUserFriends /> Sent Requests
               </button>
             </motion.div>
           </motion.div>
@@ -529,11 +599,11 @@ export default function Profile() {
                   value={formData.contactNo || ""}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                  placeholder="10-15 digits"
-                  maxLength="15"
+                  placeholder="10 digits only"
+                  maxLength="10"
                 />
                 {formData.contactNo && !validateContactNo(formData.contactNo) && (
-                  <p className="text-red-500 text-xs mt-1">Please enter a valid phone number (10-15 digits)</p>
+                  <p className="text-red-500 text-xs mt-1">Please enter a valid 10-digit phone number</p>
                 )}
               </div>
             </div>
@@ -557,34 +627,112 @@ export default function Profile() {
                 />
               </div>
               
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Preferences (type and press Enter or comma)
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.preferences?.map((pref, index) => (
-                    <motion.span
-                      key={index}
-                      className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                    >
-                      {pref}
+              {/* Preferences Sections */}
+              <div className="space-y-6">
+                {/* Design Disciplines */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Design Disciplines</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.designDisciplines.map(option => (
                       <button
-                        onClick={() => removePreference(index)}
-                        className="ml-1 text-amber-600 hover:text-amber-800"
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('designDisciplines', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.designDisciplines.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
                       >
-                        <FaTimes size={12} />
+                        {option}
                       </button>
-                    </motion.span>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  onKeyDown={handlePreferencesKeyDown}
-                  placeholder="Add a preference and press Enter"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                />
+                
+                {/* Design Process */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Design Process</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.designProcess.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('designProcess', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.designProcess.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Tools */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tools</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.tools.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('tools', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.tools.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Learning Goals */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Learning Goals</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.learningGoals.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('learningGoals', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.learningGoals.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Skill Level */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Skill Level</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.skillLevel.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('skillLevel', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.skillLevel.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -777,6 +925,59 @@ export default function Profile() {
                 ))
               ) : (
                 <p className="text-gray-500 text-center py-4">Not following anyone yet</p>
+              )}
+            </ul>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Pending Requests Modal */}
+      {isPendingRequestsModalOpen && (
+        <motion.div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FaUserFriends /> Pending Follow Requests
+              </h3>
+              <button
+                onClick={() => setPendingRequestsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            <ul className="divide-y divide-gray-200">
+              {pendingRequests.length > 0 ? (
+                pendingRequests.map((req) => (
+                  <li key={req.id} className="py-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{req.senderEmail}</p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAccept(req.id);
+                        }}
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                      >
+                        <FaCheck className="mr-1" /> Accept
+                      </button>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">No pending requests</p>
               )}
             </ul>
           </motion.div>

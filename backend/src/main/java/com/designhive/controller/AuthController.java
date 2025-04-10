@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.designhive.entity.User;
 import com.designhive.service.AuthService;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -16,19 +17,16 @@ public class AuthController {
     private AuthService authService;
 
     // ✅ Register
-    @PostMapping("/register")
-    public ResponseEntity<?> register(
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String registerUser(
             @RequestParam("username") String username,
             @RequestParam("email") String email,
             @RequestParam("password") String password,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
-        try {
-            String token = authService.register(username, email, password, profileImage);
-            return ResponseEntity.ok(token); // ✅ Return JWT token on success
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
-        }
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws Exception {
+    
+        return authService.register(username, email, password, profileImage);
     }
+    
 
     // ✅ Login
     @PostMapping("/login")
