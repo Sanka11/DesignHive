@@ -78,6 +78,32 @@ public class PostService {
                 }).collect(Collectors.toList());
     }
 
+
+// ✅ Edit a comment on a post
+public void editComment(String postId, String commentId, String updatedText) throws ExecutionException, InterruptedException {
+    DocumentReference commentRef = firestore.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .document(commentId);
+
+    Map<String, Object> updateData = new HashMap<>();
+    updateData.put("text", updatedText);
+    updateData.put("editedAt", Timestamp.now());
+
+    commentRef.update(updateData).get();
+}
+
+// ✅ Delete a comment from a post
+public void deleteComment(String postId, String commentId) throws ExecutionException, InterruptedException {
+    DocumentReference commentRef = firestore.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .document(commentId);
+
+    commentRef.delete().get();
+}
+
+
     // ✅ Create a new Post with all fields
     public Post createPost(Post post) throws ExecutionException, InterruptedException {
         post.setLikes(0);

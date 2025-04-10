@@ -58,6 +58,29 @@ public class PostController {
         }
     }
 
+    // Edit a comment
+    @PutMapping("/{postId}/comments/{commentId}")
+    public ResponseEntity<?> editComment(@PathVariable String postId, @PathVariable String commentId, @RequestBody Map<String, String> body) {
+        try {
+            postService.editComment(postId, commentId, body.get("text"));
+            return ResponseEntity.ok("Comment edited");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error editing comment");
+        }
+    }
+
+    // Delete a comment
+    @DeleteMapping("/{postId}/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(@PathVariable String postId, @PathVariable String commentId) {
+        try {
+            postService.deleteComment(postId, commentId);
+            return ResponseEntity.ok("Comment deleted");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error deleting comment");
+        }
+    }
+
+    // ✅ Create a new post with full Post object (including media, tags, etc.)
     // ✅ Create a new post with full Post object (including media, tags, etc.)
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody Post post) {
