@@ -19,6 +19,7 @@ const Post = ({ post }) => {
     learningGoals = [],
     competitionInvolvement = [],
     skillLevel,
+    profileImagePath,
     createdAt,
   } = post;
 
@@ -120,12 +121,24 @@ const Post = ({ post }) => {
 
   const getTimeDisplay = () => {
     try {
-      const date = new Date(createdAt);
+      let date;
+  
+      if (createdAt && typeof createdAt.toDate === "function") {
+        date = createdAt.toDate(); // ✅ Firestore Timestamp (rarely this happens in JS)
+      } else if (createdAt && createdAt.seconds) {
+        date = new Date(createdAt.seconds * 1000); // ✅ convert Firestore timestamp manually
+      } else {
+        date = new Date(createdAt); // fallback
+      }
+  
       return !isNaN(date) ? formatDistanceToNow(date, { addSuffix: true }) : "Just now";
     } catch (e) {
+      console.error("❌ Timestamp error:", e);
       return "Just now";
     }
   };
+  
+  
 
   const getVideoMimeType = (url) => {
     const ext = url.split(".").pop().split("?")[0].toLowerCase();
@@ -137,7 +150,17 @@ const Post = ({ post }) => {
       <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 max-w-2xl mx-auto">
         {/* Post Header */}
         <div className="flex items-center p-4 border-b">
-          <img src={DEFAULT_PROFILE_PIC} className="w-10 h-10 rounded-full border" />
+        <img
+  src={post.user?.avatar || "/assets/default-profile.png"}
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = "/assets/default-profile.png";
+  }}
+  alt={post.user?.name}
+  className="w-10 h-10 rounded-full object-cover"
+/>
+
+
           <div className="ml-3">
             <p className="font-semibold text-gray-800">{authorUsername || authorEmail}</p>
             <p className="text-xs text-gray-500">{getTimeDisplay()}</p>

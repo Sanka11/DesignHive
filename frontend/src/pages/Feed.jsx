@@ -10,6 +10,7 @@ const Feed = () => {
   const fetchPosts = async () => {
     try {
       const res = await axios.get("http://localhost:9090/api/posts");
+      console.log("📦 First post from backend:", res.data[0]);
       const sortedPosts = res.data.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt);
         const dateB = new Date(b.updatedAt || b.createdAt);
