@@ -17,6 +17,9 @@ import Post from "./pages/Post";
 import NewPost from "./pages/NewPost";
 import NewPostPage from "./pages/NewPostPage";
 import OAuthRedirect from "./pages/OAuthRedirect";
+import SentRequests from "./pages/SentRequests";
+import FollowingPage from "./pages/FollowingPage";
+import FollowersPage from "./pages/FollowersPage";
 
 function App() {
   const { user } = useAuth(); // ✅ this defines user!
@@ -31,6 +34,10 @@ function App() {
       <Route path="/chat/:chatId" element={<ChatPage currentUser={user} />} />
       <Route path="/my-chats" element={<MyChats />} />
       <Route path="/chat" element={<ChatPage currentUser={user} />} />
+      <Route path="/sent-requests" element={<SentRequests />} />
+      <Route path="/following" element={<FollowingPage />} />
+      <Route path="/followers" element={<FollowersPage />} />
+      
 
         
 

@@ -16,7 +16,6 @@ import {
   getFollowing,
 } from "../api/followApi";
 
-// Preferences options
 const PREFERENCES_OPTIONS = {
   designDisciplines: [
     "UI Design",
@@ -60,15 +59,9 @@ export default function Profile() {
 
   const [newImage, setNewImage] = useState(null);
   const [preview, setPreview] = useState(user.profileImagePath);
-  // const [preview, setPreview] = useState(
-  //   `http://localhost:9090${user.profileImagePath}`
-  // );
-
   const [pendingRequests, setPendingRequests] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
-  const [isFollowerModalOpen, setFollowerModalOpen] = useState(false);
-  const [isFollowingModalOpen, setFollowingModalOpen] = useState(false);
   const [isPendingRequestsModalOpen, setPendingRequestsModalOpen] = useState(false);
   const [notification, setNotification] = useState({ 
     show: false, 
@@ -89,7 +82,6 @@ export default function Profile() {
     setIsMounted(true);
     loadFollowData();
     
-    // Initialize selected preferences from user data
     if (user.preferences) {
       const initialPrefs = {
         designDisciplines: [],
@@ -167,18 +159,6 @@ export default function Profile() {
     }
   };
 
-  const handleUnfollow = async (receiverEmail) => {
-    try {
-      await axios.post("/follow/unfollow", null, {
-        params: { senderEmail: user.email, receiverEmail },
-      });
-      loadFollowData();
-      showNotification('Unfollowed successfully', 'success');
-    } catch (error) {
-      showNotification('Failed to unfollow', 'error');
-    }
-  };
-
   const showNotification = (message, type) => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
@@ -197,9 +177,7 @@ export default function Profile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Handle contact number validation
     if (name === 'contactNo') {
-      // Only allow numbers and limit to 10 digits
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
       setFormData((prev) => ({ ...prev, [name]: numericValue }));
       return;
@@ -225,7 +203,6 @@ export default function Profile() {
         newSelected[category] = [...newSelected[category], value];
       }
       
-      // Update formData preferences by combining all selected preferences
       const allPreferences = [];
       for (const cat in newSelected) {
         allPreferences.push(...newSelected[cat]);
@@ -342,7 +319,6 @@ export default function Profile() {
         animate={isMounted ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6 }}
       >
-        {/* Profile Header */}
         <motion.div 
           className="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-center relative"
           initial={{ opacity: 0 }}
@@ -377,14 +353,12 @@ export default function Profile() {
         </motion.div>
 
         <div className="p-8">
-          {/* Social Connections */}
           <motion.div 
             className="mb-8"
             initial={{ opacity: 0 }}
             animate={isMounted ? { opacity: 1 } : {}}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            {/* Pending Requests Notification */}
             {pendingRequests.length > 0 && (
               <motion.div 
                 className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200 cursor-pointer"
@@ -405,7 +379,6 @@ export default function Profile() {
               </motion.div>
             )}
 
-            {/* Followers/Following */}
             <motion.div 
               className="flex justify-center gap-6"
               initial={{ opacity: 0 }}
@@ -413,13 +386,13 @@ export default function Profile() {
               transition={{ delay: 0.5, duration: 0.6 }}
             >
               <button
-                onClick={() => setFollowerModalOpen(true)}
+                onClick={() => navigate('/followers')}
                 className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
               >
                 <FaUserFriends /> Followers ({followers.length})
               </button>
               <button
-                onClick={() => setFollowingModalOpen(true)}
+                onClick={() => navigate('/following')}
                 className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
               >
                 <FaUserFriends /> Following ({following.length})
@@ -433,7 +406,6 @@ export default function Profile() {
             </motion.div>
           </motion.div>
 
-          {/* Profile Image */}
           <motion.div 
             className="flex flex-col items-center gap-4 mb-8"
             initial={{ opacity: 0, y: 10 }}
@@ -462,14 +434,12 @@ export default function Profile() {
             {user.bio && <p className="text-gray-600 text-center max-w-md">{user.bio}</p>}
           </motion.div>
 
-          {/* Profile Form */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
             initial={{ opacity: 0 }}
             animate={isMounted ? { opacity: 1 } : {}}
             transition={{ delay: 0.7, duration: 0.6 }}
           >
-            {/* Basic Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2 flex items-center gap-2">
                 <FaUserEdit /> Basic Information
@@ -497,11 +467,11 @@ export default function Profile() {
                   Full Name
                 </label>
                 <input
-                  name="fullName"
-                  value={formData.fullName || ""}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                />
+                    name="fullName"
+                    value={formData.fullName || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
+                  />
               </div>
               
               <div>
@@ -519,7 +489,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Personal Details */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2 flex items-center gap-2">
                 <FaUserFriends /> Personal Details
@@ -608,7 +577,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Interests Section */}
             <div className="md:col-span-2 space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2">
                 Interests & Preferences
@@ -627,9 +595,7 @@ export default function Profile() {
                 />
               </div>
               
-              {/* Preferences Sections */}
               <div className="space-y-6">
-                {/* Design Disciplines */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Design Disciplines</h4>
                   <div className="flex flex-wrap gap-2">
@@ -650,7 +616,6 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                {/* Design Process */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Design Process</h4>
                   <div className="flex flex-wrap gap-2">
@@ -671,7 +636,6 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                {/* Tools */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Tools</h4>
                   <div className="flex flex-wrap gap-2">
@@ -692,7 +656,6 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                {/* Learning Goals */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Learning Goals</h4>
                   <div className="flex flex-wrap gap-2">
@@ -713,7 +676,6 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                {/* Skill Level */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Skill Level</h4>
                   <div className="flex flex-wrap gap-2">
@@ -736,7 +698,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Account Info */}
             <div className="md:col-span-2 space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2">
                 Account Information
@@ -779,7 +740,6 @@ export default function Profile() {
             </div>
           </motion.div>
 
-          {/* Action Buttons */}
           <motion.div 
             className="flex flex-col sm:flex-row justify-between gap-4 mt-10"
             initial={{ opacity: 0, y: 10 }}
@@ -808,7 +768,6 @@ export default function Profile() {
             </Link>
           </motion.div>
 
-          {/* Delete Account Section */}
           {isDeleteSectionOpen && (
             <motion.div 
               className="mt-6 p-6 bg-red-50 border border-red-200 rounded-lg"
@@ -833,105 +792,6 @@ export default function Profile() {
         </div>
       </motion.div>
 
-      {/* Followers Modal */}
-      {isFollowerModalOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div 
-            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FaUserFriends /> Your Followers
-              </h3>
-              <button
-                onClick={() => setFollowerModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-            <ul className="divide-y divide-gray-200">
-              {followers.length > 0 ? (
-                followers.map((f) => (
-                  <li key={f.id} className="py-3">
-                    <div className="flex items-center">
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900">{f.senderUsername}</p>
-                        <p className="text-xs text-gray-500">{f.senderEmail}</p>
-                      </div>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">No followers yet</p>
-              )}
-            </ul>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Following Modal */}
-      {isFollowingModalOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div 
-            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FaUserFriends /> People You Follow
-              </h3>
-              <button
-                onClick={() => setFollowingModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-            <ul className="divide-y divide-gray-200">
-              {following.length > 0 ? (
-                following.map((f) => (
-                  <li key={f.id} className="py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="ml-3">
-                          <p className="text-sm font-medium text-gray-900">{f.receiverUsername}</p>
-                          <p className="text-xs text-gray-500">{f.receiverEmail}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleUnfollow(f.receiverEmail)}
-                        className="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
-                      >
-                        <FaTimes size={10} /> Unfollow
-                      </button>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">Not following anyone yet</p>
-              )}
-            </ul>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Pending Requests Modal */}
       {isPendingRequestsModalOpen && (
         <motion.div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
