@@ -10,13 +10,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "http://localhost:5173") // Update to frontend origin
+@CrossOrigin(origins = "http://localhost:5173") // Update to match frontend URL
 public class PostController {
 
     @Autowired
     private PostService postService;
 
-    // Get all posts
+    // ✅ Get all posts
     @GetMapping
     public ResponseEntity<?> getPosts() {
         try {
@@ -26,7 +26,17 @@ public class PostController {
         }
     }
 
-    // Like a post
+    // ✅ Get posts by user ID
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getPostsByUser(@PathVariable String userId) {
+        try {
+            return ResponseEntity.ok(postService.getPostsByUser(userId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching user's posts");
+        }
+    }
+
+    // ✅ Like a post
     @PostMapping("/{id}/like")
     public ResponseEntity<?> likePost(@PathVariable String id) {
         try {
@@ -37,7 +47,7 @@ public class PostController {
         }
     }
 
-    // Add a comment to a post
+    // ✅ Add a comment
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(@PathVariable String id, @RequestBody Map<String, String> body) {
         try {
@@ -48,7 +58,7 @@ public class PostController {
         }
     }
 
-    // Get comments for a post
+    // ✅ Get comments for a post
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getComments(@PathVariable String id) {
         try {
@@ -58,9 +68,10 @@ public class PostController {
         }
     }
 
-    // Edit a comment
+    // ✅ Edit comment
     @PutMapping("/{postId}/comments/{commentId}")
-    public ResponseEntity<?> editComment(@PathVariable String postId, @PathVariable String commentId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> editComment(@PathVariable String postId, @PathVariable String commentId,
+            @RequestBody Map<String, String> body) {
         try {
             postService.editComment(postId, commentId, body.get("text"));
             return ResponseEntity.ok("Comment edited");
@@ -69,7 +80,7 @@ public class PostController {
         }
     }
 
-    // Delete a comment
+    // ✅ Delete comment
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable String postId, @PathVariable String commentId) {
         try {
@@ -80,8 +91,7 @@ public class PostController {
         }
     }
 
-    // ✅ Create a new post with full Post object (including media, tags, etc.)
-    // ✅ Create a new post with full Post object (including media, tags, etc.)
+    // ✅ Create a post
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody Post post) {
         try {
@@ -90,6 +100,38 @@ public class PostController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error creating post");
+        }
+    }
+
+    // ✅ Update a post (content, tags, etc.)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePost(@PathVariable String id, @RequestBody Map<String, Object> updates) {
+        try {
+            postService.updatePost(id, updates);
+            return ResponseEntity.ok("Post updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error updating post");
+        }
+    }
+
+    // ✅ Delete a post
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePost(@PathVariable String id) {
+        try {
+            postService.deletePost(id);
+            return ResponseEntity.ok("Post deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error deleting post");
+        }
+    }
+
+    // ✅ Search posts by keyword (basic)
+    @GetMapping("/search")
+    public ResponseEntity<?> searchPosts(@RequestParam("q") String keyword) {
+        try {
+            return ResponseEntity.ok(postService.searchPostsByKeyword(keyword));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error searching posts");
         }
     }
 }
