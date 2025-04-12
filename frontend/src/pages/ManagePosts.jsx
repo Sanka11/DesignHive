@@ -5,6 +5,8 @@ import { useAuth } from "../auth/useAuth";
 import { toast } from "react-toastify";
 import NewPost from "./NewPost";
 import EditPostModal from "../components/EditPostModal";
+import "react-toastify/dist/ReactToastify.css";
+import { FiPlus, FiLoader } from "react-icons/fi";
 
 const ManagePosts = () => {
   const { user } = useAuth();
@@ -36,8 +38,8 @@ const ManagePosts = () => {
 
     try {
       await axios.delete(`http://localhost:9090/api/posts/${postId}`);
-      toast.success("✅ Post deleted!");
       setMyPosts((prev) => prev.filter((p) => p.id !== postId));
+      toast.success("✅ Post deleted!");
     } catch (err) {
       console.error("Error deleting post", err);
       toast.error("Failed to delete post.");
@@ -52,6 +54,7 @@ const ManagePosts = () => {
 
   // 🔁 After editing, refresh posts
   const handlePostUpdated = () => {
+    toast.success("✅ Post updated!");
     fetchMyPosts(); // Refresh posts
     setEditModalOpen(false); // Close modal
     setEditingPost(null); // Clear editing post
@@ -68,25 +71,46 @@ const ManagePosts = () => {
   }, [user]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-4xl mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Manage Posts</h1>
+        <p className="text-gray-600 mt-2">
+          View and manage all your created posts
+        </p>
+      </div>
+
       {/* ➕ Add New Post */}
-      {user && <NewPost user={user} refreshPosts={refreshPosts} />}
+      {user && (
+        <div className="mb-8">
+          <NewPost user={user} refreshPosts={refreshPosts} />
+        </div>
+      )}
 
       {/* 🧾 Posts List */}
-      <div className="mt-8">
+      <div>
         {isLoading ? (
-          <p className="text-center text-gray-500">Loading your posts...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <FiLoader className="animate-spin text-3xl text-blue-600 mb-4" />
+            <p className="text-gray-600">Loading your posts...</p>
+          </div>
         ) : myPosts.length > 0 ? (
-          myPosts.map((post) => (
-            <ManagePostCard
-              key={post.id}
-              post={post}
-              onEdit={() => handleEdit(post)}
-              onDelete={() => handleDelete(post.id)}
-            />
-          ))
+          <div className="space-y-6">
+            {myPosts.map((post) => (
+              <ManagePostCard
+                key={post.id}
+                post={post}
+                onEdit={() => handleEdit(post)}
+                onDelete={() => handleDelete(post.id)}
+              />
+            ))}
+          </div>
         ) : (
-          <p className="text-center text-gray-500">You haven’t created any posts yet.</p>
+          <div className="bg-white shadow-sm rounded-xl p-8 text-center border border-gray-200">
+            <p className="text-gray-600">
+              You haven't created any posts yet. Create your first post above.
+            </p>
+          </div>
         )}
       </div>
 
@@ -98,6 +122,7 @@ const ManagePosts = () => {
           setEditingPost(null);
         }}
         post={editingPost}
+        user={user}
         onPostUpdated={handlePostUpdated}
       />
     </div>

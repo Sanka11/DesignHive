@@ -21,6 +21,7 @@ import SentRequests from "./pages/SentRequests";
 import FollowingPage from "./pages/FollowingPage";
 import FollowersPage from "./pages/FollowersPage";
 import ManagePosts from './pages/ManagePosts';
+import RecommendedPost from "./pages/RecommendedPost";
 
 function App() {
   const { user } = useAuth(); // ✅ this defines user!
@@ -51,6 +52,8 @@ function App() {
         <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
         <Route path="/newpost" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
         <Route path="/manageposts" element={<ManagePosts />} />
+        <Route path="/recommended" element={<RecommendedPost />} />
+
 
         {/* Add more routes here under the Navbar layout */}
       </Route>

@@ -182,4 +182,111 @@ public class PostService {
                 .whereEqualTo("id", authorId).limit(1).get().get().getDocuments();
         return docs.isEmpty() ? null : docs.get(0).getString("profileImagePath");
     }
+
+    // ✅ Get recommended posts by matching user preferences
+    private List<String> safeList(Object obj) {
+        if (obj instanceof List<?>) {
+            return ((List<?>) obj).stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
+
+    public List<Map<String, Object>> getRecommendedPosts(String userId)
+            throws ExecutionException, InterruptedException {
+
+        System.out.println("Fetching recommended posts for userId: " + userId);
+
+        List<QueryDocumentSnapshot> userDocs = firestore.collection("users")
+                .whereEqualTo("id", userId).limit(1).get().get().getDocuments();
+
+        if (userDocs.isEmpty()) {
+            System.out.println("❌ User not found in Firestore (by field id).");
+            return Collections.emptyList();
+        }
+
+        DocumentSnapshot userDoc = userDocs.get(0);
+
+        List<String> preferences = safeList(userDoc.get("preferences"));
+        System.out.println("✅ Preferences loaded: " + preferences);
+
+        if (preferences.isEmpty()) {
+            System.out.println("❌ Preferences list is empty.");
+            return Collections.emptyList();
+        }
+
+        Set<String> lowerPrefs = preferences.stream()
+                .filter(Objects::nonNull)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        List<QueryDocumentSnapshot> allPosts = firestore.collection("posts").get().get().getDocuments();
+        System.out.println("📦 Fetched posts: " + allPosts.size());
+
+        List<Map<String, Object>> recommendedPosts = new ArrayList<>();
+        Set<String> authorIds = new HashSet<>();
+
+        for (QueryDocumentSnapshot doc : allPosts) {
+            List<String> combinedTags = new ArrayList<>();
+            combinedTags.addAll(safeList(doc.get("designDisciplines")));
+            combinedTags.addAll(safeList(doc.get("designProcess")));
+            combinedTags.addAll(safeList(doc.get("tools")));
+            combinedTags.addAll(safeList(doc.get("learningGoals")));
+            combinedTags.addAll(safeList(doc.get("competitionInvolvement")));
+
+            String skillLevel = doc.getString("skillLevel");
+            if (skillLevel != null) {
+                combinedTags.add(skillLevel);
+            }
+
+            Set<String> lowerTags = combinedTags.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toSet());
+
+            boolean matches = lowerTags.stream().anyMatch(lowerPrefs::contains);
+
+            System.out.println("🔍 Post: " + doc.getId());
+            System.out.println("    Tags: " + lowerTags);
+            System.out.println("    Matches: " + matches);
+
+            if (matches) {
+                authorIds.add(doc.getString("authorId"));
+                Map<String, Object> postData = doc.getData();
+                postData.put("id", doc.getId());
+                recommendedPosts.add(postData);
+                System.out.println("✅ Added recommended post: " + doc.getId());
+            }
+        }
+
+        System.out.println("✅ Total recommended posts: " + recommendedPosts.size());
+
+        // Fetch author avatars
+        Map<String, DocumentSnapshot> userDocsById = new HashMap<>();
+        for (String authorId : authorIds) {
+            List<QueryDocumentSnapshot> userQuery = firestore.collection("users")
+                    .whereEqualTo("id", authorId).limit(1).get().get().getDocuments();
+            if (!userQuery.isEmpty()) {
+                userDocsById.put(authorId, userQuery.get(0));
+            }
+        }
+
+        // Add user info to post
+        for (Map<String, Object> post : recommendedPosts) {
+            String authorId = (String) post.get("authorId");
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("name", post.get("authorUsername"));
+            userMap.put("email", post.get("authorEmail"));
+            if (userDocsById.containsKey(authorId)) {
+                DocumentSnapshot userDocSnap = userDocsById.get(authorId);
+                userMap.put("avatar", userDocSnap.getString("profileImagePath"));
+            }
+            post.put("user", userMap);
+        }
+
+        return recommendedPosts;
+    }
+
 }
