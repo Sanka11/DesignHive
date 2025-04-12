@@ -20,6 +20,7 @@ import OAuthRedirect from "./pages/OAuthRedirect";
 import SentRequests from "./pages/SentRequests";
 import FollowingPage from "./pages/FollowingPage";
 import FollowersPage from "./pages/FollowersPage";
+import ManagePosts from './pages/ManagePosts';
 
 function App() {
   const { user } = useAuth(); // ✅ this defines user!
@@ -49,6 +50,7 @@ function App() {
         <Route path="/Feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
         <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
         <Route path="/newpost" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
+        <Route path="/manageposts" element={<ManagePosts />} />
 
         {/* Add more routes here under the Navbar layout */}
       </Route>
