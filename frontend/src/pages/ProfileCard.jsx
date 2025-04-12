@@ -25,8 +25,9 @@ const ProfileCard = ({ user }) => {
     if (!user?.profileImagePath) return defaultProfilePic;
     return user.profileImagePath.startsWith("http") 
       ? user.profileImagePath 
-      : `http://localhost:9090${user.profileImagePath}`;
+      : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`;
   };
+  
 
   // Fetch data using same functions as profile page
   useEffect(() => {

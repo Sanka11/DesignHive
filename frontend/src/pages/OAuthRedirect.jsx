@@ -16,7 +16,7 @@ export default function OAuthRedirect() {
         await handleOAuthRedirect();
 
         // ✅ Step 2: Fetch authenticated user from backend
-        const res = await axios.get("http://localhost:9090/api/user/me", {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/user/me`, {
           withCredentials: true,
         });
 

@@ -18,21 +18,26 @@ const RecommendedPost = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:9090/api/posts/recommended?userId=${user?.id}`
+        `${import.meta.env.VITE_API_BASE_URL}/posts/recommended?userId=${user?.id}`
       );
 
-      const transformed = response.data.map((post) => ({
-        ...post,
-        user: {
-          name: post.authorUsername || "Unknown",
-          email: post.authorEmail,
-          avatar: post.user?.avatar || post.profileImagePath || "/assets/default-profile.png",
-        },
-        media: post.mediaUrls?.[0] || null,
-      }));
+      const transformed = response.data
+        .filter((post) => post.authorId !== user?.id) // ✅ exclude logged-in user's own posts
+        .map((post) => ({
+          ...post,
+          user: {
+            name: post.authorUsername || "Unknown",
+            email: post.authorEmail,
+            avatar:
+              post.user?.avatar ||
+              post.profileImagePath ||
+              "/assets/default-profile.png",
+          },
+          media: post.mediaUrls?.[0] || null,
+        }));
 
       setRecommendedPosts(transformed);
-      setFilteredPosts(transformed); // initial state
+      setFilteredPosts(transformed);
     } catch (error) {
       console.error("❌ Error fetching recommended posts:", error);
     } finally {
@@ -46,15 +51,20 @@ const RecommendedPost = () => {
     let filtered = recommendedPosts.filter((post) => {
       return (
         post.content?.toLowerCase().includes(keyword) ||
-        post.designDisciplines?.some((tag) => tag.toLowerCase().includes(keyword)) ||
+        post.designDisciplines?.some((tag) =>
+          tag.toLowerCase().includes(keyword)
+        ) ||
         post.tools?.some((tag) => tag.toLowerCase().includes(keyword)) ||
-        post.learningGoals?.some((tag) => tag.toLowerCase().includes(keyword)) ||
-        post.competitionInvolvement?.some((tag) => tag.toLowerCase().includes(keyword)) ||
+        post.learningGoals?.some((tag) =>
+          tag.toLowerCase().includes(keyword)
+        ) ||
+        post.competitionInvolvement?.some((tag) =>
+          tag.toLowerCase().includes(keyword)
+        ) ||
         (post.skillLevel || "").toLowerCase().includes(keyword)
       );
     });
 
-    // ✅ Strict filter by selected preference tag
     if (selectedPreference) {
       filtered = filtered.filter((post) => {
         const allTags = [
@@ -65,8 +75,9 @@ const RecommendedPost = () => {
           ...(post.competitionInvolvement || []),
           post.skillLevel || "",
         ];
-        return allTags.some((tag) =>
-          tag.toLowerCase() === selectedPreference.toLowerCase()
+        return allTags.some(
+          (tag) =>
+            tag.toLowerCase().trim() === selectedPreference.toLowerCase().trim()
         );
       });
     }
