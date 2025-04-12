@@ -65,4 +65,11 @@ public class FollowController {
         return followRepository.getPendingSentRequests(senderEmail);
     }
 
+    @PostMapping("/remove-follower")
+    public String removeFollower(@RequestParam String receiverEmail, @RequestParam String senderEmail)
+            throws Exception {
+        followRepository.unfollow(senderEmail, receiverEmail); // same logic as unfollow, just reversed
+        return "Follower removed successfully";
+    }
+
 }

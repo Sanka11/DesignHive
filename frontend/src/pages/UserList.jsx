@@ -181,7 +181,7 @@ export default function UserList({ user }) {
   };
 
   return (
-    <div className="md:w-[30%] relative">
+    <div className="md:w-[28%] relative">
       {/* Animated User Profile Modal */}
       <AnimatePresence>
         {isModalOpen && selectedUser && (

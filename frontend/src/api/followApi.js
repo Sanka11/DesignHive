@@ -23,3 +23,8 @@ export const getFollowers = (email) =>
 
 export const getFollowing = (email) =>
   axios.get("/follow/following", { params: { email } });
+
+export const removeFollower = (senderEmail, receiverEmail) =>
+  axios.post("/follow/remove-follower", null, {
+    params: { senderEmail, receiverEmail },
+  });
