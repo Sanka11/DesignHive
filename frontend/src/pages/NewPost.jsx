@@ -28,8 +28,9 @@ const NewPost = ({ user, refreshPosts }) => {
   const profilePic = useMemo(() => {
     if (user?.profileImagePath) {
       return user.profileImagePath.startsWith("http")
-        ? user.profileImagePath
-        : `http://localhost:9090${user.profileImagePath}`;
+  ? user.profileImagePath
+  : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`;
+
     }
     return DEFAULT_PROFILE_PIC;
   }, [user]);
@@ -50,9 +51,11 @@ const NewPost = ({ user, refreshPosts }) => {
       "Usability Testing",
     ],
     tools: [
-      "Figma",
-      "Adobe XD",
-      "Sketch",
+     "Figma",
+     "Adobe XD",
+     "Sketch",
+     "Blender",
+     "After Effects"
     ],
     learningGoals: [
       "Career Development",
@@ -234,7 +237,7 @@ const NewPost = ({ user, refreshPosts }) => {
         URL.revokeObjectURL(url);
       }
 
-      await axios.post("http://localhost:9090/api/posts", {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts`, {
         content,
         authorEmail: user?.email || "anonymous",
         authorUsername: user?.username || "unknown",
@@ -247,6 +250,7 @@ const NewPost = ({ user, refreshPosts }) => {
         competitionInvolvement,
         mediaUrls,
       });
+      
 
       toast.dismiss();
       toast.success("✅ Post created successfully!");

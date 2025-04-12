@@ -16,7 +16,7 @@ const Feed = () => {
   const fetchPosts = async () => {
     try {
       setIsLoadingPosts(true);
-      const res = await axios.get("http://localhost:9090/api/posts");
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts`);
       console.log("📦 First post from backend:", res.data[0]);
       const sortedPosts = res.data.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt);
@@ -56,10 +56,11 @@ const Feed = () => {
 
   const getProfilePic = (userData) => {
     if (userData?.profileImagePath) {
-      return `http://localhost:9090${userData.profileImagePath}`;
+      return `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${userData.profileImagePath}`;
     }
     return defaultProfilePic;
   };
+   
 
   useEffect(() => {
     fetchPosts();

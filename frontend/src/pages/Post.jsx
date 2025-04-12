@@ -51,17 +51,19 @@ const Post = ({ post }) => {
   ];
 
   useEffect(() => {
-    fetchComments();
+    if (id) fetchComments();
   }, [id]);
+  
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get(`http://localhost:9090/api/posts/${id}/comments`);
-      setComments(res.data);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`);
+      setComments(res.data); // ✅ now 'res' is defined
     } catch (err) {
       console.error("Error loading comments", err);
     }
   };
+  
 
   useEffect(() => {
     const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
@@ -70,7 +72,7 @@ const Post = ({ post }) => {
 
   const handleLike = async () => {
     try {
-      const res = await axios.post(`http://localhost:9090/api/posts/${id}/like`);
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`);
       setLikes(res.data.likes);
       const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
       const updatedLikes = isLiked
@@ -86,7 +88,7 @@ const Post = ({ post }) => {
   const handleAddComment = async () => {
     if (newComment.trim()) {
       try {
-        await axios.post(`http://localhost:9090/api/posts/${id}/comments`, {
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`, {
           text: newComment,
         });
         setNewComment("");
@@ -99,7 +101,7 @@ const Post = ({ post }) => {
 
   const handleEditComment = async (commentId) => {
     try {
-      await axios.put(`http://localhost:9090/api/posts/${id}/comments/${commentId}`, {
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments/${commentId}`, {
         text: editedCommentText,
       });
       setEditingCommentId(null);
@@ -112,7 +114,7 @@ const Post = ({ post }) => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      await axios.delete(`http://localhost:9090/api/posts/${id}/comments/${commentId}`);
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments/${commentId}`);
       fetchComments();
     } catch (err) {
       console.error("Error deleting comment", err);

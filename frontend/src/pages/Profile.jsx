@@ -32,7 +32,9 @@ const PREFERENCES_OPTIONS = {
   tools: [
     "Figma",
     "Adobe XD",
-    "Sketch"
+    "Sketch",
+    "Blender",
+    "After Effects"
   ],
   learningGoals: [
     "Career Development",

@@ -56,10 +56,11 @@ const Navbar = () => {
   if (!user) return null;
 
   const profilePic = user.profileImagePath
-    ? user.profileImagePath.startsWith("http")
-      ? user.profileImagePath
-      : `http://localhost:9090${user.profileImagePath}`
-    : defaultProfilePic;
+  ? user.profileImagePath.startsWith("http")
+    ? user.profileImagePath
+    : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`
+  : defaultProfilePic;
+
 
   const firstName = user.username?.split(' ')[0] || 'User';
   const userEmail = user.email || '';

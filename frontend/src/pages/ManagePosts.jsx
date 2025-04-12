@@ -19,9 +19,25 @@ const ManagePosts = () => {
   const fetchMyPosts = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get("http://localhost:9090/api/posts");
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts`);
       const allPosts = res.data;
-      const filtered = allPosts.filter((post) => post.authorId === user?.id);
+  
+      // Normalize tag arrays
+      const normalizeTags = (tags) =>
+        (tags || []).map((t) => (typeof t === "string" ? t : t?.value)).filter(Boolean);
+  
+      // Filter and normalize
+      const filtered = allPosts
+        .filter((post) => post.authorId === user?.id)
+        .map((post) => ({
+          ...post,
+          designDisciplines: normalizeTags(post.designDisciplines),
+          designProcess: normalizeTags(post.designProcess),
+          tools: normalizeTags(post.tools),
+          learningGoals: normalizeTags(post.learningGoals),
+          competitionInvolvement: normalizeTags(post.competitionInvolvement),
+        }));
+  
       setMyPosts(filtered);
     } catch (err) {
       console.error("❌ Error fetching posts:", err);
@@ -29,7 +45,7 @@ const ManagePosts = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }; 
 
   // 🗑️ Delete post
   const handleDelete = async (postId) => {
@@ -37,7 +53,7 @@ const ManagePosts = () => {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:9090/api/posts/${postId}`);
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/posts/${postId}`);
       setMyPosts((prev) => prev.filter((p) => p.id !== postId));
       toast.success("✅ Post deleted!");
     } catch (err) {

@@ -44,6 +44,8 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
       "Figma",
       "Adobe XD",
       "Sketch",
+      "Blender",
+      "After Effects" 
     ],
     learningGoals: [
       "Career Development",
@@ -248,7 +250,7 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
         skillLevel,
       };
 
-      await axios.put(`http://localhost:9090/api/posts/${post.id}`, updatedPost);
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/posts/${post.id}`, updatedPost);
       toast.success("✅ Post updated successfully!");
       onPostUpdated();
       onRequestClose();

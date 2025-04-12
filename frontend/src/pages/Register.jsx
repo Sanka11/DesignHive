@@ -29,7 +29,7 @@ export default function Register() {
   }, []);
 
   const handleSocialRegister = (provider) => {
-    window.location.href = `http://localhost:9090/oauth2/authorization/${provider}`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}/oauth2/authorization/${provider}`;
   };
 
   const handleSubmit = async (e) => {
