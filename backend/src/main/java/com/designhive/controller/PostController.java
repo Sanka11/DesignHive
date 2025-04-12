@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -134,4 +135,16 @@ public class PostController {
             return ResponseEntity.status(500).body("Error searching posts");
         }
     }
+
+    @GetMapping("/recommended")
+    public ResponseEntity<?> getRecommendedPosts(@RequestParam String userId) {
+        try {
+            List<Map<String, Object>> posts = postService.getRecommendedPosts(userId);
+            return ResponseEntity.ok(posts);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error fetching recommended posts");
+        }
+    }
+
 }

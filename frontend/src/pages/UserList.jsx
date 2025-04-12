@@ -11,7 +11,8 @@ import {
   FiUser,
   FiHeart,
   FiAward,
-  FiBriefcase
+  FiBriefcase,
+  FiSearch
 } from "react-icons/fi";
 import defaultProfilePic from "../assets/default-profile.png";
 import {
@@ -65,7 +66,7 @@ export default function UserList({ user }) {
 
   const getProfilePic = (userData) => {
     if (userData?.profileImagePath) {
-      return userData.profileImagePath; // Using Firebase URL directly
+      return userData.profileImagePath;
     }
     return defaultProfilePic;
   };
@@ -181,7 +182,7 @@ export default function UserList({ user }) {
   };
 
   return (
-    <div className="md:w-[28%] relative">
+    <div className="w-full lg:w-[28%] relative">
       {/* Animated User Profile Modal */}
       <AnimatePresence>
         {isModalOpen && selectedUser && (
@@ -197,7 +198,7 @@ export default function UserList({ user }) {
               variants={modalVariants}
             >
               {/* Modal Header with Gradient Background */}
-              <div className="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-white relative">
+              <div className="bg-gradient-to-r from-amber-500 to-yellow-600 p-4 md:p-6 text-white relative">
                 <div className="flex justify-between items-center">
                   <button
                     onClick={closeModal}
@@ -206,23 +207,23 @@ export default function UserList({ user }) {
                   >
                     <FiX size={24} className="text-white" />
                   </button>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 md:gap-3">
                     {statuses[selectedUser.email] === "accepted" ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleUnfollow(selectedUser.email);
                         }}
-                        className="flex items-center gap-2 bg-white hover:bg-amber-50 text-amber-700 px-4 py-2 rounded-full transition-colors shadow-sm"
+                        className="flex items-center gap-1 md:gap-2 bg-white hover:bg-amber-50 text-amber-700 px-3 py-1 md:px-4 md:py-2 rounded-full transition-colors shadow-sm text-sm md:text-base"
                       >
-                        <FaUserCheck /> Following
+                        <FaUserCheck className="text-xs md:text-base" /> Following
                       </button>
                     ) : statuses[selectedUser.email] === "pending" ? (
                       <button
                         disabled
-                        className="flex items-center gap-2 bg-white bg-opacity-80 text-amber-700 px-4 py-2 rounded-full shadow-sm"
+                        className="flex items-center gap-1 md:gap-2 bg-white bg-opacity-80 text-amber-700 px-3 py-1 md:px-4 md:py-2 rounded-full shadow-sm text-sm md:text-base"
                       >
-                        <FaUserCheck /> Requested
+                        <FaUserCheck className="text-xs md:text-base" /> Requested
                       </button>
                     ) : (
                       <button
@@ -230,31 +231,31 @@ export default function UserList({ user }) {
                           e.stopPropagation();
                           handleFollow(selectedUser.email);
                         }}
-                        className="flex items-center gap-2 bg-white hover:bg-amber-50 text-amber-700 px-4 py-2 rounded-full transition-colors shadow-sm"
+                        className="flex items-center gap-1 md:gap-2 bg-white hover:bg-amber-50 text-amber-700 px-3 py-1 md:px-4 md:py-2 rounded-full transition-colors shadow-sm text-sm md:text-base"
                       >
-                        <FaUserPlus /> Follow
+                        <FaUserPlus className="text-xs md:text-base" /> Follow
                       </button>
                     )}
                     <button
                       onClick={() => startChatWithUser(selectedUser.email)}
-                      className="flex items-center gap-2 bg-white hover:bg-amber-50 text-amber-700 px-4 py-2 rounded-full transition-colors shadow-sm"
+                      className="flex items-center gap-1 md:gap-2 bg-white hover:bg-amber-50 text-amber-700 px-3 py-1 md:px-4 md:py-2 rounded-full transition-colors shadow-sm text-sm md:text-base"
                     >
-                      <FiMessageSquare /> Message
+                      <FiMessageSquare className="text-xs md:text-base" /> Message
                     </button>
                   </div>
                 </div>
 
-                <div className="absolute top-4 right-4">
-                  <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
+                <div className="absolute top-3 right-3 md:top-4 md:right-4">
+                  <GiHoneycomb className="text-amber-200 text-lg md:text-xl opacity-60" />
                 </div>
               </div>
 
               {/* Profile Content */}
-              <div className="p-8">
-                <div className="flex flex-col md:flex-row gap-8">
+              <div className="p-4 md:p-8">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8">
                   {/* Left Column - Avatar & Basic Info */}
                   <div className="flex flex-col items-center md:items-start w-full md:w-1/3">
-                    <div className="relative w-48 h-48 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 mb-6 overflow-hidden border-4 border-white shadow-xl">
+                    <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 mb-4 md:mb-6 overflow-hidden border-4 border-white shadow-xl">
                       <img
                         src={getProfilePic(selectedUser)}
                         alt={selectedUser.username}
@@ -265,43 +266,43 @@ export default function UserList({ user }) {
                         }}
                       />
                       {selectedUser.isOnline && (
-                        <div className="absolute bottom-3 right-3 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                        <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-white"></div>
                       )}
                     </div>
 
                     <div className="text-center md:text-left w-full">
-                      <h1 className="text-3xl font-bold text-gray-800">{selectedUser.username}</h1>
+                      <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{selectedUser.username}</h1>
                       {selectedUser.title && (
-                        <p className="text-amber-600 font-medium mt-1">{selectedUser.title}</p>
+                        <p className="text-amber-600 font-medium mt-1 text-sm md:text-base">{selectedUser.title}</p>
                       )}
 
                       {selectedUser.bio && (
-                        <p className="text-gray-600 mt-4 text-center md:text-left">
+                        <p className="text-gray-600 mt-3 md:mt-4 text-sm md:text-base text-center md:text-left">
                           {selectedUser.bio}
                         </p>
                       )}
 
                       {/* Social Links */}
                       {selectedUser.website && (
-                        <div className="mt-4 flex items-center justify-center md:justify-start">
+                        <div className="mt-3 md:mt-4 flex items-center justify-center md:justify-start">
                           <a
                             href={selectedUser.website.startsWith('http') ? selectedUser.website : `https://${selectedUser.website}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-amber-600 hover:text-amber-800 flex items-center"
+                            className="text-amber-600 hover:text-amber-800 flex items-center text-sm md:text-base"
                           >
-                            <FaLink className="mr-2" />
+                            <FaLink className="mr-1 md:mr-2" />
                             {selectedUser.website.replace(/(^\w+:|^)\/\//, '')}
                           </a>
                         </div>
                       )}
 
                       {/* Skills/Tags */}
-                      <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-2">
+                      <div className="mt-4 md:mt-6 flex flex-wrap justify-center md:justify-start gap-1 md:gap-2">
                         {selectedUser.skills?.slice(0, 6).map((skill, index) => (
                           <motion.span
                             key={index}
-                            className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm"
+                            className="bg-amber-100 text-amber-800 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm"
                             whileHover={{ scale: 1.05 }}
                           >
                             {skill}
@@ -312,37 +313,37 @@ export default function UserList({ user }) {
                   </div>
 
                   {/* Right Column - Detailed Info */}
-                  <div className="flex-1 space-y-6">
+                  <div className="flex-1 space-y-4 md:space-y-6">
                     {/* Personal Info Section */}
-                    <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-                      <h2 className="text-xl font-semibold mb-4 flex items-center text-amber-800">
+                    <div className="bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100">
+                      <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center text-amber-800">
                         <FiUser className="mr-2" />
                         Personal Information
                       </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         {selectedUser.fullName && (
                           <div className="flex items-start">
-                            <span className="font-medium text-gray-600 mr-2 min-w-[100px]">Full Name:</span>
-                            <span className="text-gray-800">{selectedUser.fullName}</span>
+                            <span className="font-medium text-gray-600 mr-2 min-w-[80px] md:min-w-[100px] text-sm md:text-base">Full Name:</span>
+                            <span className="text-gray-800 text-sm md:text-base">{selectedUser.fullName}</span>
                           </div>
                         )}
 
                         <div className="flex items-start">
-                          <IoMdMail className="text-amber-500 mr-2 mt-1" />
+                          <IoMdMail className="text-amber-500 mr-2 mt-0.5 md:mt-1" />
                           <div>
-                            <span className="block text-gray-600">Email</span>
-                            <span className="text-gray-800">{selectedUser.email}</span>
+                            <span className="block text-gray-600 text-xs md:text-sm">Email</span>
+                            <span className="text-gray-800 text-sm md:text-base">{selectedUser.email}</span>
                           </div>
                         </div>
 
                         {selectedUser.birthday && (
                           <div className="flex items-start">
-                            <FaBirthdayCake className="text-amber-500 mr-2 mt-1" />
+                            <FaBirthdayCake className="text-amber-500 mr-2 mt-0.5 md:mt-1" />
                             <div>
-                              <span className="block text-gray-600">Birthday</span>
-                              <span className="text-gray-800">
+                              <span className="block text-gray-600 text-xs md:text-sm">Birthday</span>
+                              <span className="text-gray-800 text-sm md:text-base">
                                 {formatDate(selectedUser.birthday)}
-                                <span className="text-gray-500 ml-2">
+                                <span className="text-gray-500 ml-1 md:ml-2 text-xs md:text-sm">
                                   ({calculateAge(selectedUser.birthday)} years)
                                 </span>
                               </span>
@@ -352,30 +353,30 @@ export default function UserList({ user }) {
 
                         {selectedUser.gender && (
                           <div className="flex items-start">
-                            <FaVenusMars className="text-amber-500 mr-2 mt-1" />
+                            <FaVenusMars className="text-amber-500 mr-2 mt-0.5 md:mt-1" />
                             <div>
-                              <span className="block text-gray-600">Gender</span>
-                              <span className="text-gray-800">{selectedUser.gender}</span>
+                              <span className="block text-gray-600 text-xs md:text-sm">Gender</span>
+                              <span className="text-gray-800 text-sm md:text-base">{selectedUser.gender}</span>
                             </div>
                           </div>
                         )}
 
                         {selectedUser.location && (
                           <div className="flex items-start">
-                            <FaMapMarkerAlt className="text-amber-500 mr-2 mt-1" />
+                            <FaMapMarkerAlt className="text-amber-500 mr-2 mt-0.5 md:mt-1" />
                             <div>
-                              <span className="block text-gray-600">Location</span>
-                              <span className="text-gray-800">{selectedUser.location}</span>
+                              <span className="block text-gray-600 text-xs md:text-sm">Location</span>
+                              <span className="text-gray-800 text-sm md:text-base">{selectedUser.location}</span>
                             </div>
                           </div>
                         )}
 
                         {selectedUser.contactNo && (
                           <div className="flex items-start">
-                            <FaPhone className="text-amber-500 mr-2 mt-1" />
+                            <FaPhone className="text-amber-500 mr-2 mt-0.5 md:mt-1" />
                             <div>
-                              <span className="block text-gray-600">Phone</span>
-                              <span className="text-gray-800">{selectedUser.contactNo}</span>
+                              <span className="block text-gray-600 text-xs md:text-sm">Phone</span>
+                              <span className="text-gray-800 text-sm md:text-base">{selectedUser.contactNo}</span>
                             </div>
                           </div>
                         )}
@@ -384,30 +385,30 @@ export default function UserList({ user }) {
 
                     {/* About Section */}
                     {selectedUser.about && (
-                      <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center text-amber-800">
+                      <div className="bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100">
+                        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center text-amber-800">
                           <FiGlobe className="mr-2" />
                           About
                         </h2>
-                        <p className="text-gray-700 whitespace-pre-line">{selectedUser.about}</p>
+                        <p className="text-gray-700 whitespace-pre-line text-sm md:text-base">{selectedUser.about}</p>
                       </div>
                     )}
 
                     {/* Interests Section */}
                     {selectedUser.interests && (
-                      <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center text-amber-800">
+                      <div className="bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100">
+                        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center text-amber-800">
                           <FiHeart className="mr-2" />
                           Interests
                         </h2>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-2 md:gap-3">
                           {selectedUser.interests.split(',').map((interest, index) => (
                             <motion.span
                               key={index}
-                              className="bg-white text-amber-700 px-4 py-2 rounded-full text-sm shadow-sm flex items-center"
+                              className="bg-white text-amber-700 px-3 py-1 rounded-full text-xs md:text-sm shadow-sm flex items-center"
                               whileHover={{ scale: 1.05 }}
                             >
-                              <GiBee className="mr-2" /> {interest.trim()}
+                              <GiBee className="mr-1 md:mr-2" /> {interest.trim()}
                             </motion.span>
                           ))}
                         </div>
@@ -416,21 +417,21 @@ export default function UserList({ user }) {
 
                     {/* Experience/Education Section */}
                     {selectedUser.experience && selectedUser.experience.length > 0 && (
-                      <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center text-amber-800">
+                      <div className="bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100">
+                        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center text-amber-800">
                           <FiBriefcase className="mr-2" />
                           Experience
                         </h2>
-                        <div className="space-y-4">
+                        <div className="space-y-3 md:space-y-4">
                           {selectedUser.experience.map((exp, index) => (
-                            <div key={index} className="border-l-4 border-amber-400 pl-4 py-1">
-                              <h3 className="font-bold text-gray-800">{exp.role}</h3>
-                              <p className="text-gray-600">{exp.company}</p>
-                              <p className="text-sm text-gray-500">
+                            <div key={index} className="border-l-4 border-amber-400 pl-3 md:pl-4 py-1">
+                              <h3 className="font-bold text-gray-800 text-sm md:text-base">{exp.role}</h3>
+                              <p className="text-gray-600 text-sm md:text-base">{exp.company}</p>
+                              <p className="text-xs md:text-sm text-gray-500">
                                 {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : 'Present'}
                               </p>
                               {exp.description && (
-                                <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
+                                <p className="text-gray-700 mt-1 md:mt-2 text-xs md:text-sm">{exp.description}</p>
                               )}
                             </div>
                           ))}
@@ -440,16 +441,16 @@ export default function UserList({ user }) {
 
                     {/* Preferences Section */}
                     {selectedUser.preferences?.length > 0 && (
-                      <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center text-amber-800">
+                      <div className="bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100">
+                        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center text-amber-800">
                           <FaRegStar className="mr-2" />
                           Preferences
                         </h2>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1 md:gap-2">
                           {selectedUser.preferences.map((pref, index) => (
                             <motion.span
                               key={index}
-                              className="bg-white text-amber-700 px-3 py-1 rounded-full text-sm shadow-sm flex items-center"
+                              className="bg-white text-amber-700 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm shadow-sm flex items-center"
                               whileHover={{ scale: 1.05 }}
                             >
                               <FaStar className="mr-1 text-amber-400" /> {pref}
@@ -467,40 +468,40 @@ export default function UserList({ user }) {
       </AnimatePresence>
 
       {/* User List Sidebar */}
-      <div className="sticky top-8 space-y-6">
-        {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
+      <div className="sticky top-4 md:top-8 space-y-4 md:space-y-6">
+        {/* Search Bar - Mobile optimized */}
+        <div className="bg-white rounded-xl shadow-sm p-3 md:p-4">
           <div className="relative">
             <input
               type="text"
               placeholder="Search people..."
-              className="w-full pl-10 pr-4 py-3 bg-amber-50 rounded-lg border-none focus:ring-2 focus:ring-amber-200 text-gray-700"
+              className="w-full pl-10 pr-4 py-2 md:py-3 bg-amber-50 rounded-lg border-none focus:ring-2 focus:ring-amber-200 text-gray-700 text-sm md:text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <div className="absolute left-3 top-3.5 text-amber-500">
-              <GiBee />
+            <div className="absolute left-3 top-2.5 md:top-3 text-amber-500">
+              <FiSearch className="text-lg" />
             </div>
           </div>
         </div>
 
-        {/* Following Section */}
+        {/* Following Section - Mobile optimized */}
         {followingUsers.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-4">
-            <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+          <div className="bg-white rounded-xl shadow-sm p-3 md:p-4">
+            <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center text-sm md:text-base">
               <FiUserCheck className="mr-2 text-amber-500" />
               Following ({followingUsers.length})
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {followingUsers.slice(0, 5).map((u) => (
                 <motion.li
                   key={u.email}
-                  className="flex items-center justify-between p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-2 md:p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleUserClick(u)}
-                  whileHover={{ x: 5 }}
+                  whileHover={{ x: 3 }}
                 >
                   <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-amber-100 mr-3 overflow-hidden border-2 border-white shadow">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-100 mr-2 md:mr-3 overflow-hidden border-2 border-white shadow">
                       <img
                         src={getProfilePic(u)}
                         alt={u.username}
@@ -512,19 +513,20 @@ export default function UserList({ user }) {
                       />
                     </div>
                     <div>
-                      <span className="text-sm font-medium block">{u.username}</span>
+                      <span className="text-xs md:text-sm font-medium block">{u.username}</span>
                       <span className="text-xs text-amber-600">Following</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startChatWithUser(u.email);
                       }}
-                      className="text-xs bg-amber-600 text-white px-3 py-1 rounded-full hover:bg-amber-700 flex items-center transition-colors"
+                      className="text-xs bg-amber-600 text-white p-1 md:px-2 md:py-1 rounded-full hover:bg-amber-700 flex items-center transition-colors"
                     >
-                      <FiMessageSquare size={12} className="mr-1" />
+                      <FiMessageSquare size={10} className="md:mr-1" />
+                      <span className="hidden md:inline">Message</span>
                     </button>
                   </div>
                 </motion.li>
@@ -532,7 +534,7 @@ export default function UserList({ user }) {
             </ul>
             {followingUsers.length > 5 && (
               <button
-                className="text-xs text-amber-600 mt-2 hover:underline"
+                className="text-xs text-amber-600 mt-1 md:mt-2 hover:underline"
                 onClick={() => setShowAllSuggestions(!showAllSuggestions)}
               >
                 See all {followingUsers.length} following
@@ -541,24 +543,24 @@ export default function UserList({ user }) {
           </div>
         )}
 
-        {/* Suggestions Section */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+        {/* Suggestions Section - Mobile optimized */}
+        <div className="bg-white rounded-xl shadow-sm p-3 md:p-4">
+          <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center text-sm md:text-base">
             <FiUserPlus className="mr-2 text-amber-500" />
             Suggestions for you
           </h3>
-          <ul className="space-y-3">
+          <ul className="space-y-2 md:space-y-3">
             {displayedSuggestions.map((u) => {
               const status = statuses[u.email] || "none";
               return (
                 <motion.li
                   key={u.email}
-                  className="flex items-center justify-between p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-2 md:p-3 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleUserClick(u)}
-                  whileHover={{ x: 5 }}
+                  whileHover={{ x: 3 }}
                 >
                   <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-amber-100 mr-3 overflow-hidden border-2 border-white shadow">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-100 mr-2 md:mr-3 overflow-hidden border-2 border-white shadow">
                       <img
                         src={getProfilePic(u)}
                         alt={u.username}
@@ -570,19 +572,20 @@ export default function UserList({ user }) {
                       />
                     </div>
                     <div>
-                      <span className="text-sm font-medium block">{u.username}</span>
+                      <span className="text-xs md:text-sm font-medium block">{u.username}</span>
                       <span className="text-xs text-amber-600">New to DesignHive</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startChatWithUser(u.email);
                       }}
-                      className="text-xs bg-amber-600 text-white px-3 py-1 rounded-full hover:bg-amber-700 flex items-center transition-colors"
+                      className="text-xs bg-amber-600 text-white p-1 md:px-2 md:py-1 rounded-full hover:bg-amber-700 flex items-center transition-colors"
                     >
-                      <FiMessageSquare size={12} className="mr-1" />
+                      <FiMessageSquare size={10} className="md:mr-1" />
+                      <span className="hidden md:inline">Message</span>
                     </button>
                     {status === "none" && (
                       <button
@@ -590,17 +593,19 @@ export default function UserList({ user }) {
                           e.stopPropagation();
                           handleFollow(u.email);
                         }}
-                        className="text-xs bg-white border border-amber-600 text-amber-600 px-3 py-1 rounded-full hover:bg-amber-50 transition-colors"
+                        className="text-xs bg-white border border-amber-600 text-amber-600 p-1 md:px-2 md:py-1 rounded-full hover:bg-amber-50 transition-colors"
                       >
-                        Follow
+                        <span className="hidden md:inline">Follow</span>
+                        <span className="md:hidden">+</span>
                       </button>
                     )}
                     {status === "pending" && (
                       <button
                         disabled
-                        className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full"
+                        className="text-xs bg-amber-100 text-amber-700 p-1 md:px-2 md:py-1 rounded-full"
                       >
-                        Requested
+                        <span className="hidden md:inline">Requested</span>
+                        <span className="md:hidden">✓</span>
                       </button>
                     )}
                   </div>
@@ -611,22 +616,22 @@ export default function UserList({ user }) {
           {otherUsers.length > 5 && (
             <button
               onClick={() => setShowAllSuggestions(!showAllSuggestions)}
-              className="text-xs text-amber-600 mt-2 hover:underline"
+              className="text-xs text-amber-600 mt-1 md:mt-2 hover:underline"
             >
               {showAllSuggestions ? "Show less" : `Show more (${otherUsers.length - 5})`}
             </button>
           )}
         </div>
 
-        {/* Footer Links */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <div className="flex flex-wrap gap-2">
+        {/* Footer Links - Mobile optimized */}
+        <div className="text-xs text-gray-500 space-y-1 px-2 md:px-0">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
             <a href="#" className="hover:underline hover:text-amber-600">About</a>
             <a href="#" className="hover:underline hover:text-amber-600">Help</a>
             <a href="#" className="hover:underline hover:text-amber-600">Terms</a>
             <a href="#" className="hover:underline hover:text-amber-600">Privacy</a>
           </div>
-          
+          <p className="text-xs mt-1">© {new Date().getFullYear()} DesignHive</p>
         </div>
       </div>
     </div>
