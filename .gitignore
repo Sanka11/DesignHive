@@ -13,7 +13,6 @@ target/
 
 # Backend
 *.log
-.env
 *.class
 *.jar
 *.war
