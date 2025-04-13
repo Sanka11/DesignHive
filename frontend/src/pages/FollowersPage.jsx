@@ -8,7 +8,7 @@ import { GiHoneycomb, GiBee } from 'react-icons/gi';
 import { getFollowers } from "../api/followApi";
 
 export default function FollowersPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Destructure `loading` from useAuth
   const navigate = useNavigate();
   const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,15 +20,15 @@ export default function FollowersPage() {
   const [userToRemove, setUserToRemove] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for authentication state to load
     if (!user) {
       navigate('/login');
       return;
     }
-
     setIsMounted(true);
     fetchAllUsers();
     fetchFollowers();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchAllUsers = async () => {
     try {
@@ -94,6 +94,15 @@ export default function FollowersPage() {
     setUserToRemove(null);
   };
 
+  if (authLoading) {
+    // Show a loading indicator while authentication state is being restored
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
@@ -104,6 +113,7 @@ export default function FollowersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 py-10 px-4">
+      {/* Notification */}
       {notification.show && (
         <motion.div 
           className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
@@ -128,6 +138,7 @@ export default function FollowersPage() {
         </motion.div>
       )}
 
+      {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <motion.div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -168,6 +179,7 @@ export default function FollowersPage() {
         </motion.div>
       )}
 
+      {/* Main Content */}
       <motion.div 
         className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
@@ -206,8 +218,8 @@ export default function FollowersPage() {
             <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
           </motion.div>
         </motion.div>
-
         <div className="p-8">
+          {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
             className="mb-6 flex items-center gap-2 text-amber-600 hover:text-amber-800 transition-colors"
@@ -215,6 +227,7 @@ export default function FollowersPage() {
             <FaArrowLeft /> Back to Profile
           </button>
 
+          {/* Loading State */}
           {loading ? (
             <div className="text-center py-10">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto mb-4"></div>
@@ -248,7 +261,6 @@ export default function FollowersPage() {
                   You have {followers.length} follower{followers.length !== 1 ? 's' : ''}
                 </p>
               </div>
-
               <ul className="divide-y divide-gray-200">
                 {followers.map((follower) => (
                   <motion.li 

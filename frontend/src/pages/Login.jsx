@@ -20,6 +20,8 @@ export default function Login() {
     message: '',
     type: ''
   });
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
 
   useState(() => {
     setIsMounted(true);
@@ -27,6 +29,10 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Reset error states
+    setEmailError(false);
+    setPasswordError(false);
 
     try {
       const res = await axios.post("/auth/login", { email, password });
@@ -51,17 +57,32 @@ export default function Login() {
           navigate("/feed");
         }, 1500);
       } else {
+        setEmailError(true);
+        setPasswordError(true);
         setNotification({
           show: true,
-          message: res.data,
+          message: 'Invalid email or password. Please try again.',
           type: 'error'
         });
       }
     } catch (err) {
       console.error("Login error:", err);
+      let errorMessage = "Login failed. Please try again.";
+      
+      setEmailError(true);
+      setPasswordError(true);
+      
+      if (err.response) {
+        if (err.response.data && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.status === 401) {
+          errorMessage = "Invalid email or password.";
+        }
+      }
+      
       setNotification({
         show: true,
-        message: "Login failed. Please try again.",
+        message: errorMessage,
         type: 'error'
       });
     }
@@ -213,10 +234,18 @@ export default function Login() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError(false);
+                  }}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    emailError ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200`}
                   placeholder="your@email.com"
                 />
+                {emailError && (
+                  <p className="mt-1 text-sm text-red-600">Please enter a valid email</p>
+                )}
               </motion.div>
 
               <motion.div
@@ -234,8 +263,13 @@ export default function Login() {
                     autoComplete="current-password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200 pr-12"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError(false);
+                    }}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      passwordError ? 'border-red-500' : 'border-gray-300'
+                    } focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors duration-200 pr-12`}
                     placeholder="••••••••"
                   />
                   <button
@@ -246,6 +280,9 @@ export default function Login() {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600">Password is incorrect</p>
+                )}
               </motion.div>
 
               <motion.div 
@@ -310,7 +347,7 @@ export default function Login() {
           animate={isMounted ? { opacity: 1 } : {}}
           transition={{ delay: 1.2, duration: 0.6 }}
         >
-          <p>© {new Date().getFullYear()} YourAppName. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} DesignHive. All rights reserved.</p>
         </motion.div>
       </motion.div>
     </div>

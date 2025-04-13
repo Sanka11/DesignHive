@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from 'framer-motion';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
-import { FaEye, FaEyeSlash, FaTimes, FaCheck, FaUserFriends, FaUserEdit, FaTrash, FaBirthdayCake, FaPhone, FaMapMarkerAlt, FaVenusMars } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTimes, FaCheck, FaUserFriends, FaUserEdit, FaTrash, FaBirthdayCake, FaPhone, FaMapMarkerAlt, FaVenusMars, FaArrowLeft } from 'react-icons/fa';
 import { IoMdMail } from 'react-icons/io';
 import { MdPassword } from 'react-icons/md';
 import {
@@ -52,10 +52,7 @@ export default function Profile() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ ...user });
-  const [birthdayDate, setBirthdayDate] = useState(() => {
-    const date = new Date(user.birthday);
-    return isNaN(date.getTime()) ? null : date;
-  });
+  const [birthdayDate, setBirthdayDate] = useState(null);
 
   const [newImage, setNewImage] = useState(null);
   const [preview, setPreview] = useState(user.profileImagePath);
@@ -77,10 +74,20 @@ export default function Profile() {
     learningGoals: [],
     skillLevel: []
   });
+  const [usersMap, setUsersMap] = useState({});
 
   useEffect(() => {
     setIsMounted(true);
+    fetchAllUsers();
     loadFollowData();
+    
+    // Initialize birthday date if it exists in user data
+    if (user.birthday) {
+      const date = new Date(user.birthday);
+      if (!isNaN(date.getTime())) {
+        setBirthdayDate(date);
+      }
+    }
     
     if (user.preferences) {
       const initialPrefs = {
@@ -104,9 +111,23 @@ export default function Profile() {
     }
   }, []);
 
+  const fetchAllUsers = async () => {
+    try {
+      const response = await axios.get("/user/all");
+      const users = response.data.reduce((map, user) => {
+        map[user.email] = user.username;
+        return map;
+      }, {});
+      setUsersMap(users);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
   const calculateAge = (birthday) => {
     if (!birthday) return 0;
     const birthDate = new Date(birthday);
+    if (isNaN(birthDate.getTime())) return 0;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -124,12 +145,6 @@ export default function Profile() {
         getFollowers(user.email),
         getFollowing(user.email)
       ]);
-
-      const allUsersRes = await axios.get("/user/all");
-      const usersMap = allUsersRes.data.reduce((map, user) => {
-        map[user.email] = user.username;
-        return map;
-      }, {});
 
       const followersWithUsernames = res2.data.map(f => ({
         ...f,
@@ -156,6 +171,22 @@ export default function Profile() {
       showNotification('Follow request accepted', 'success');
     } catch (error) {
       showNotification('Failed to accept request', 'error');
+    }
+  };
+
+  const handleCancelRequest = async (receiverEmail) => {
+    try {
+      await axios.post("/follow/cancel", null, {
+        params: { 
+          senderEmail: user.email, 
+          receiverEmail 
+        }
+      });
+      showNotification('Follow request canceled successfully', 'success');
+      loadFollowData();
+    } catch (err) {
+      console.error("Error canceling request:", err);
+      showNotification('Failed to cancel follow request', 'error');
     }
   };
 
@@ -218,14 +249,14 @@ export default function Profile() {
   };
 
   const handleDateChange = (date) => {
-    if (date > new Date()) {
+    if (date && date > new Date()) {
       showNotification('Birthday cannot be in the future', 'error');
       return;
     }
     setBirthdayDate(date);
     setFormData(prev => ({
       ...prev,
-      age: calculateAge(date)
+      age: date ? calculateAge(date) : 0
     }));
   };
 
@@ -254,6 +285,8 @@ export default function Profile() {
       if (birthdayDate) {
         const formatted = birthdayDate.toISOString().split("T")[0];
         data.set("birthday", formatted);
+      } else {
+        data.set("birthday", "");
       }
 
       if (newImage) data.append("profileImage", newImage);
@@ -502,13 +535,18 @@ export default function Profile() {
                   <DatePicker
                     selected={birthdayDate}
                     onChange={handleDateChange}
+                    onChangeRaw={(e) => e.preventDefault()}
                     dateFormat="yyyy-MM-dd"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                    placeholderText="Select date"
+                    placeholderText="Select your birthday"
                     showYearDropdown
                     scrollableYearDropdown
                     yearDropdownItemNumber={100}
                     maxDate={new Date()}
+                    isClearable
+                    openToDate={new Date(2000, 0, 1)}
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                 </div>
                 
@@ -519,7 +557,7 @@ export default function Profile() {
                   <input
                     name="age"
                     type="number"
-                    value={formData.age || calculateAge(birthdayDate) || ""}
+                    value={birthdayDate ? calculateAge(birthdayDate) : ""}
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
                     disabled
@@ -822,17 +860,29 @@ export default function Profile() {
                   <li key={req.id} className="py-3">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{req.senderEmail}</p>
+                        <p className="text-sm font-medium text-gray-900">{usersMap[req.senderEmail] || req.senderEmail}</p>
+                        <p className="text-xs text-gray-500">{req.senderEmail}</p>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAccept(req.id);
-                        }}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
-                      >
-                        <FaCheck className="mr-1" /> Accept
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccept(req.id);
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                        >
+                          <FaCheck className="mr-1" /> Accept
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelRequest(req.senderEmail);
+                          }}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                        >
+                          <FaTimes className="mr-1" /> Cancel
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))
