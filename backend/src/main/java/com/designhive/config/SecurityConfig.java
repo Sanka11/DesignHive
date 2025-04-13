@@ -30,6 +30,9 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers("/api/user/me").authenticated()
                                                 .requestMatchers("/api/user/profile").permitAll()
+                                                .requestMatchers("/api/user/followers").permitAll()
+                                                .requestMatchers("/api/user/following").permitAll()
+                                                .requestMatchers("/api/user/sent-requests").permitAll()
                                                 .anyRequest().permitAll())
                                 .exceptionHandling(ex -> ex
                                                 // 🔐 Respond with 401 for unauthenticated REST API requests

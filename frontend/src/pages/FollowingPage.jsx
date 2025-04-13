@@ -3,12 +3,12 @@ import { useAuth } from "../auth/useAuth";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from 'framer-motion';
-import { FaUserFriends, FaTimes, FaArrowLeft, FaCheck, FaQuestion } from 'react-icons/fa';
+import { FaUserFriends, FaTimes, FaArrowLeft, FaQuestion } from 'react-icons/fa';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
 import { getFollowing } from "../api/followApi";
 
 export default function FollowingPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Destructure `loading` from useAuth
   const navigate = useNavigate();
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,15 +20,15 @@ export default function FollowingPage() {
   const [userToUnfollow, setUserToUnfollow] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for authentication state to load
     if (!user) {
       navigate('/login');
       return;
     }
-
     setIsMounted(true);
     fetchAllUsers();
     fetchFollowing();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchAllUsers = async () => {
     try {
@@ -80,8 +80,7 @@ export default function FollowingPage() {
       showNotification('Unfollowed successfully', 'success');
       setShowConfirmDialog(false);
       setUserToUnfollow(null);
-      // Refresh the page by reloading the data
-      fetchFollowing();
+      await fetchFollowing(); // Refresh the following list
     } catch (err) {
       console.error("Error unfollowing:", err);
       showNotification('Failed to unfollow', 'error');
@@ -95,6 +94,15 @@ export default function FollowingPage() {
     setUserToUnfollow(null);
   };
 
+  if (authLoading) {
+    // Show a loading indicator while authentication state is being restored
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
@@ -105,6 +113,7 @@ export default function FollowingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 py-10 px-4">
+      {/* Notification */}
       {notification.show && (
         <motion.div 
           className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
@@ -128,7 +137,7 @@ export default function FollowingPage() {
           </div>
         </motion.div>
       )}
-
+      {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <motion.div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -168,7 +177,7 @@ export default function FollowingPage() {
           </motion.div>
         </motion.div>
       )}
-
+      {/* Main Content */}
       <motion.div 
         className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
@@ -207,15 +216,15 @@ export default function FollowingPage() {
             <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
           </motion.div>
         </motion.div>
-
         <div className="p-8">
+          {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
             className="mb-6 flex items-center gap-2 text-amber-600 hover:text-amber-800 transition-colors"
           >
             <FaArrowLeft /> Back to Profile
           </button>
-
+          {/* Loading State */}
           {loading ? (
             <div className="text-center py-10">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto mb-4"></div>
@@ -249,7 +258,6 @@ export default function FollowingPage() {
                   You are following {following.length} user{following.length !== 1 ? 's' : ''}
                 </p>
               </div>
-
               <ul className="divide-y divide-gray-200">
                 {following.map((follow) => (
                   <motion.li 
