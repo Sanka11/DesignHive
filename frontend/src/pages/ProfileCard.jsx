@@ -120,7 +120,7 @@ const ProfileCard = ({ user }) => {
           </Link>
           
           <Link
-            to="/learning-plans"
+            to="/learning-planhome"
             className="flex items-center justify-center space-x-2 w-full bg-amber-50 hover:bg-amber-100 text-amber-800 font-medium py-2 px-4 rounded-lg transition border border-amber-200"
           >
             <FaGraduationCap className="text-amber-700" />
