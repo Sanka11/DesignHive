@@ -9,6 +9,9 @@ import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import Home from "./pages/Home";
+import HomeLearningPlan from "./pages/HomeLeraningPlan.jsx";
+import CreatePlanPage from "./pages/CreatePlanPage.jsx";
+import LearningPlanPage from "./pages/LearningPlanPage.jsx";
 
 function App() {
   return (
@@ -23,9 +26,36 @@ function App() {
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-       
+        <Route
+          path="/learning-planhome"
+          element={
+            <ProtectedRoute>
+              <HomeLearningPlan />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/create-plan"
+          element={
+            <ProtectedRoute>
+              <CreatePlanPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/learning-plan/:id"
+          element={
+            <ProtectedRoute>
+              <LearningPlanPage />
+            </ProtectedRoute>
+          }
+        />
+        
         {/* Add more routes here under the Navbar layout */}
       </Route>
+      
 
      
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

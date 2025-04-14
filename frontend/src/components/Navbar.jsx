@@ -97,7 +97,7 @@ const Navbar = () => {
             <NavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</NavLink>
             <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
             <NavLink to="/share">New Post</NavLink>
-            <NavLink to="/learning">Learning Plans</NavLink>
+            <NavLink to="/learning-planhome">Learning Plans</NavLink>
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">
               <FaBell className="text-amber-800 text-xl" />
