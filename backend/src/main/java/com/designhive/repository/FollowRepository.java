@@ -1,6 +1,5 @@
 package com.designhive.repository;
 
-
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -36,7 +35,8 @@ public class FollowRepository {
         ref.update("status", "accepted").get();
     }
 
-    public List<FollowRequest> getPendingRequests(String receiverEmail) throws InterruptedException, ExecutionException {
+    public List<FollowRequest> getPendingRequests(String receiverEmail)
+            throws InterruptedException, ExecutionException {
         Firestore db = FirestoreClient.getFirestore();
         Query query = db.collection(COLLECTION_NAME)
                 .whereEqualTo("receiverEmail", receiverEmail)
@@ -96,7 +96,7 @@ public class FollowRepository {
         return statusMap;
     }
 
-// ✅ Unfollow: delete accepted follow entry
+    // ✅ Unfollow: delete accepted follow entry
     public void unfollow(String senderEmail, String receiverEmail) throws Exception {
         Firestore db = FirestoreClient.getFirestore();
         Query query = db.collection(COLLECTION_NAME)
@@ -111,7 +111,36 @@ public class FollowRepository {
         }
     }
 
+    // Cancel a pending follow request (can be done by sender or receiver)
+    public void cancelPendingRequest(String senderEmail, String receiverEmail) throws Exception {
+        Firestore db = FirestoreClient.getFirestore();
+        Query query = db.collection(COLLECTION_NAME)
+                .whereEqualTo("senderEmail", senderEmail)
+                .whereEqualTo("receiverEmail", receiverEmail)
+                .whereEqualTo("status", "pending");
 
+        ApiFuture<QuerySnapshot> future = query.get();
+        List<QueryDocumentSnapshot> docs = future.get().getDocuments();
+
+        for (DocumentSnapshot doc : docs) {
+            doc.getReference().delete(); // delete the pending request
+        }
+    }
+
+    public List<FollowRequest> getPendingSentRequests(String senderEmail) throws Exception {
+        Firestore db = FirestoreClient.getFirestore();
+        Query query = db.collection(COLLECTION_NAME)
+                .whereEqualTo("senderEmail", senderEmail)
+                .whereEqualTo("status", "pending");
+    
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+    
+        List<FollowRequest> requests = new ArrayList<>();
+        for (DocumentSnapshot doc : querySnapshot.get().getDocuments()) {
+            requests.add(doc.toObject(FollowRequest.class));
+        }
+        return requests;
+    }
     
 
 }

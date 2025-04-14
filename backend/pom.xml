@@ -69,7 +69,7 @@
             <artifactId>firebase-admin</artifactId>
             <version>9.1.1</version>
         </dependency>
-		
+
 
 
 		<!-- Annotation Processor for Lombok -->
@@ -97,10 +97,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+       <dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+   
 
 
-		
-		
+
 	</dependencies>
 
 	<build>

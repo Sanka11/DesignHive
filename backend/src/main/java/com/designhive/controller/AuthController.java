@@ -1,15 +1,13 @@
 package com.designhive.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.designhive.entity.User;
 import com.designhive.service.AuthService;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,21 +16,26 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @PostMapping("/register")
-    public String register(@RequestParam("username") String username,
-                           @RequestParam("email") String email,
-                           @RequestParam("password") String password,
-                           @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws Exception {
+    // ✅ Register
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String registerUser(
+            @RequestParam("username") String username,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws Exception {
+    
         return authService.register(username, email, password, profileImage);
     }
+    
 
+    // ✅ Login
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
+    public ResponseEntity<?> login(@RequestBody User user) {
         try {
-            return authService.login(user.getEmail(), user.getPassword());
+            String token = authService.login(user.getEmail(), user.getPassword());
+            return ResponseEntity.ok(token); // ✅ Return JWT token on success
         } catch (Exception e) {
-            e.printStackTrace();
-            return "Server error: " + e.getMessage();
+            return ResponseEntity.status(401).body("Login failed: " + e.getMessage());
         }
     }
 }

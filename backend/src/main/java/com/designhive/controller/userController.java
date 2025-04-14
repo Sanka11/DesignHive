@@ -1,30 +1,20 @@
 package com.designhive.controller;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.cloud.FirestoreClient;
 import com.designhive.entity.User;
 import com.designhive.repository.UserRepository;
+import com.designhive.service.FirebaseStorageService;
 
 @RestController
 @RequestMapping("/api/user")
@@ -33,23 +23,30 @@ public class userController {
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping("/profile")
-    public User getUserByEmail(@RequestParam String email) throws Exception {
+    @Autowired
+    private FirebaseStorageService firebaseStorageService;
+
+    @GetMapping("/email/{email}")
+    public User getUserByEmailPath(@PathVariable String email) throws Exception {
+        System.out.println("🔍 Looking up user by email (path): " + email);
         User user = userRepository.getUserByEmail(email);
-        if (user == null) {
-            throw new Exception("User not found");
-        }
+        if (user == null) throw new Exception("User not found");
+        return user;
+    }
+
+    @GetMapping("/profile")
+    public User getUserByEmailQuery(@RequestParam String email) throws Exception {
+        System.out.println("🔍 Looking up user by email (query): " + email);
+        User user = userRepository.getUserByEmail(email);
+        if (user == null) throw new Exception("User not found");
         return user;
     }
 
     @PutMapping("/update")
     public String updateUser(@RequestBody User updatedUser) throws Exception {
         User existing = userRepository.getUserByEmail(updatedUser.getEmail());
-        if (existing == null) {
-            throw new Exception("User not found");
-        }
+        if (existing == null) throw new Exception("User not found");
 
-        // Preserve sensitive/unchanged fields
         updatedUser.setId(existing.getId());
         updatedUser.setPassword(existing.getPassword());
         updatedUser.setProfileImagePath(existing.getProfileImagePath());
@@ -78,9 +75,7 @@ public class userController {
     ) throws Exception {
 
         User user = userRepository.getUserByEmail(email);
-        if (user == null) {
-            throw new Exception("User not found");
-        }
+        if (user == null) throw new Exception("User not found");
 
         user.setUsername(username);
         if (fullName != null) user.setFullName(fullName);
@@ -96,11 +91,10 @@ public class userController {
         if (openToSkillShare != null) user.setOpenToSkillShare(openToSkillShare);
         if (platforms != null) user.setPlatforms(platforms);
 
+        // ✅ Upload to Firebase Storage instead of saving locally
         if (profileImage != null && !profileImage.isEmpty()) {
-            String filename = UUID.randomUUID() + "_" + profileImage.getOriginalFilename();
-            Path filePath = Paths.get("E:\\DesignHive\\DesignHive\\backend\\src\\main\\resources\\static\\uploads", filename);
-            Files.copy(profileImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            user.setProfileImagePath("/uploads/" + filename);
+            String imageUrl = firebaseStorageService.uploadFile(profileImage);
+            user.setProfileImagePath(imageUrl);
         }
 
         userRepository.saveUser(user);
@@ -110,9 +104,7 @@ public class userController {
     @DeleteMapping("/delete")
     public String deleteUser(@RequestParam String email) throws Exception {
         User user = userRepository.getUserByEmail(email);
-        if (user == null) {
-            throw new Exception("User not found");
-        }
+        if (user == null) throw new Exception("User not found");
         Firestore db = FirestoreClient.getFirestore();
         db.collection("users").document(email).delete().get();
         return "Account deleted successfully";
@@ -143,9 +135,7 @@ public class userController {
         }
 
         User user = userRepository.getUserByEmail(email);
-        if (user == null) {
-            throw new Exception("User not found");
-        }
+        if (user == null) throw new Exception("User not found");
 
         return user;
     }

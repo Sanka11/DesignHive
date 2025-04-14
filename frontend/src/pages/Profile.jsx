@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from 'framer-motion';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
-import { FaEye, FaEyeSlash, FaTimes, FaCheck, FaUserFriends, FaUserEdit, FaTrash, FaBirthdayCake, FaPhone, FaMapMarkerAlt, FaVenusMars } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTimes, FaCheck, FaUserFriends, FaUserEdit, FaTrash, FaBirthdayCake, FaPhone, FaMapMarkerAlt, FaVenusMars, FaArrowLeft } from 'react-icons/fa';
 import { IoMdMail } from 'react-icons/io';
 import { MdPassword } from 'react-icons/md';
 import {
@@ -16,26 +16,52 @@ import {
   getFollowing,
 } from "../api/followApi";
 
+const PREFERENCES_OPTIONS = {
+  designDisciplines: [
+    "UI Design",
+    "UX Design",
+    "Interaction Design",
+    "Motion Design"
+  ],
+  designProcess: [
+    "Wireframing",
+    "Prototyping",
+    "Visual Design",
+    "UI Design Techniques"
+  ],
+  tools: [
+    "Figma",
+    "Adobe XD",
+    "Sketch",
+    "Blender",
+    "After Effects"
+  ],
+  learningGoals: [
+    "Career Development",
+    "Improving UI/UX skills",
+    "Mastering Tools",
+    "Building Case Studies"
+  ],
+  skillLevel: [
+    "Beginner",
+    "Intermediate",
+    "Advanced"
+  ]
+};
+
 export default function Profile() {
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ ...user });
-  const [birthdayDate, setBirthdayDate] = useState(() => {
-    const date = new Date(user.birthday);
-    return isNaN(date.getTime()) ? null : date;
-  });
+  const [birthdayDate, setBirthdayDate] = useState(null);
 
   const [newImage, setNewImage] = useState(null);
-  const [preview, setPreview] = useState(
-    `http://localhost:9090${user.profileImagePath}`
-  );
-
+  const [preview, setPreview] = useState(user.profileImagePath);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
-  const [isFollowerModalOpen, setFollowerModalOpen] = useState(false);
-  const [isFollowingModalOpen, setFollowingModalOpen] = useState(false);
+  const [isPendingRequestsModalOpen, setPendingRequestsModalOpen] = useState(false);
   const [notification, setNotification] = useState({ 
     show: false, 
     message: '', 
@@ -43,15 +69,67 @@ export default function Profile() {
   });
   const [isMounted, setIsMounted] = useState(false);
   const [isDeleteSectionOpen, setDeleteSectionOpen] = useState(false);
+  const [selectedPreferences, setSelectedPreferences] = useState({
+    designDisciplines: [],
+    designProcess: [],
+    tools: [],
+    learningGoals: [],
+    skillLevel: []
+  });
+  const [usersMap, setUsersMap] = useState({});
 
   useEffect(() => {
     setIsMounted(true);
+    fetchAllUsers();
     loadFollowData();
+    
+    // Initialize birthday date if it exists in user data
+    if (user.birthday) {
+      const date = new Date(user.birthday);
+      if (!isNaN(date.getTime())) {
+        setBirthdayDate(date);
+      }
+    }
+    
+    if (user.preferences) {
+      const initialPrefs = {
+        designDisciplines: [],
+        designProcess: [],
+        tools: [],
+        learningGoals: [],
+        skillLevel: []
+      };
+      
+      user.preferences.forEach(pref => {
+        for (const category in PREFERENCES_OPTIONS) {
+          if (PREFERENCES_OPTIONS[category].includes(pref)) {
+            initialPrefs[category].push(pref);
+            break;
+          }
+        }
+      });
+      
+      setSelectedPreferences(initialPrefs);
+    }
   }, []);
+
+  const fetchAllUsers = async () => {
+    try {
+      const response = await axios.get("/user/all");
+      const users = response.data.reduce((map, user) => {
+        map[user.email] = user.username;
+        return map;
+      }, {});
+      setUsersMap(users);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
 
   const calculateAge = (birthday) => {
     if (!birthday) return 0;
     const birthDate = new Date(birthday);
+    if (isNaN(birthDate.getTime())) return 0;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -69,12 +147,6 @@ export default function Profile() {
         getFollowers(user.email),
         getFollowing(user.email)
       ]);
-
-      const allUsersRes = await axios.get("/user/all");
-      const usersMap = allUsersRes.data.reduce((map, user) => {
-        map[user.email] = user.username;
-        return map;
-      }, {});
 
       const followersWithUsernames = res2.data.map(f => ({
         ...f,
@@ -104,15 +176,19 @@ export default function Profile() {
     }
   };
 
-  const handleUnfollow = async (receiverEmail) => {
+  const handleCancelRequest = async (receiverEmail) => {
     try {
-      await axios.post("/follow/unfollow", null, {
-        params: { senderEmail: user.email, receiverEmail },
+      await axios.post("/follow/cancel", null, {
+        params: { 
+          senderEmail: user.email, 
+          receiverEmail 
+        }
       });
+      showNotification('Follow request canceled successfully', 'success');
       loadFollowData();
-      showNotification('Unfollowed successfully', 'success');
-    } catch (error) {
-      showNotification('Failed to unfollow', 'error');
+    } catch (err) {
+      console.error("Error canceling request:", err);
+      showNotification('Failed to cancel follow request', 'error');
     }
   };
 
@@ -133,6 +209,13 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'contactNo') {
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      return;
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -144,47 +227,48 @@ export default function Profile() {
     }
   };
 
-  const handlePreferencesKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const newPref = e.target.value.trim();
-      if (newPref && !formData.preferences?.includes(newPref)) {
-        setFormData((prev) => ({
-          ...prev,
-          preferences: [...(prev.preferences || []), newPref],
-        }));
-        e.target.value = "";
+  const handlePreferencesChange = (category, value) => {
+    setSelectedPreferences(prev => {
+      const newSelected = { ...prev };
+      if (newSelected[category].includes(value)) {
+        newSelected[category] = newSelected[category].filter(item => item !== value);
+      } else {
+        newSelected[category] = [...newSelected[category], value];
       }
-    }
-  };
-
-  const removePreference = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferences: prev.preferences.filter((_, i) => i !== index),
-    }));
+      
+      const allPreferences = [];
+      for (const cat in newSelected) {
+        allPreferences.push(...newSelected[cat]);
+      }
+      
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        preferences: allPreferences
+      }));
+      
+      return newSelected;
+    });
   };
 
   const handleDateChange = (date) => {
-    if (date > new Date()) {
+    if (date && date > new Date()) {
       showNotification('Birthday cannot be in the future', 'error');
       return;
     }
     setBirthdayDate(date);
     setFormData(prev => ({
       ...prev,
-      age: calculateAge(date)
+      age: date ? calculateAge(date) : 0
     }));
   };
 
   const validateContactNo = (number) => {
-    const regex = /^[0-9]{10,15}$/;
-    return regex.test(number);
+    return number.length === 10;
   };
 
   const handleSubmit = async () => {
     if (formData.contactNo && !validateContactNo(formData.contactNo)) {
-      showNotification('Please enter a valid contact number (10-15 digits)', 'error');
+      showNotification('Please enter a valid 10-digit contact number', 'error');
       return;
     }
 
@@ -203,6 +287,8 @@ export default function Profile() {
       if (birthdayDate) {
         const formatted = birthdayDate.toISOString().split("T")[0];
         data.set("birthday", formatted);
+      } else {
+        data.set("birthday", "");
       }
 
       if (newImage) data.append("profileImage", newImage);
@@ -268,7 +354,6 @@ export default function Profile() {
         animate={isMounted ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6 }}
       >
-        {/* Profile Header */}
         <motion.div 
           className="bg-gradient-to-r from-amber-500 to-yellow-600 p-6 text-center relative"
           initial={{ opacity: 0 }}
@@ -303,45 +388,32 @@ export default function Profile() {
         </motion.div>
 
         <div className="p-8">
-          {/* Social Connections */}
           <motion.div 
             className="mb-8"
             initial={{ opacity: 0 }}
             animate={isMounted ? { opacity: 1 } : {}}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            {/* Pending Requests */}
             {pendingRequests.length > 0 && (
               <motion.div 
-                className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200"
+                className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200 cursor-pointer"
                 initial={{ opacity: 0, y: 10 }}
                 animate={isMounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.4, duration: 0.4 }}
+                onClick={() => setPendingRequestsModalOpen(true)}
               >
-                <h3 className="text-lg font-semibold mb-3 text-amber-800 flex items-center">
-                  <FaUserFriends className="mr-2" />
-                  Pending Follow Requests ({pendingRequests.length})
-                </h3>
-                <div className="space-y-2">
-                  {pendingRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex justify-between items-center bg-white p-3 rounded-lg border border-amber-100"
-                    >
-                      <span className="font-medium text-gray-700">{req.senderEmail}</span>
-                      <button
-                        onClick={() => handleAccept(req.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
-                      >
-                        <FaCheck className="mr-1" /> Accept
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-amber-800 flex items-center">
+                    <FaUserFriends className="mr-2" />
+                    You have {pendingRequests.length} pending follow request{pendingRequests.length > 1 ? 's' : ''}
+                  </h3>
+                  <button className="text-amber-600 hover:text-amber-800">
+                    View all
+                  </button>
                 </div>
               </motion.div>
             )}
 
-            {/* Followers/Following */}
             <motion.div 
               className="flex justify-center gap-6"
               initial={{ opacity: 0 }}
@@ -349,21 +421,26 @@ export default function Profile() {
               transition={{ delay: 0.5, duration: 0.6 }}
             >
               <button
-                onClick={() => setFollowerModalOpen(true)}
+                onClick={() => navigate('/followers')}
                 className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
               >
                 <FaUserFriends /> Followers ({followers.length})
               </button>
               <button
-                onClick={() => setFollowingModalOpen(true)}
+                onClick={() => navigate('/following')}
                 className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
               >
                 <FaUserFriends /> Following ({following.length})
               </button>
+              <button
+                onClick={() => navigate('/sent-requests')}
+                className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg transition-colors"
+              >
+                <FaUserFriends /> Sent Requests
+              </button>
             </motion.div>
           </motion.div>
 
-          {/* Profile Image */}
           <motion.div 
             className="flex flex-col items-center gap-4 mb-8"
             initial={{ opacity: 0, y: 10 }}
@@ -392,14 +469,12 @@ export default function Profile() {
             {user.bio && <p className="text-gray-600 text-center max-w-md">{user.bio}</p>}
           </motion.div>
 
-          {/* Profile Form */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
             initial={{ opacity: 0 }}
             animate={isMounted ? { opacity: 1 } : {}}
             transition={{ delay: 0.7, duration: 0.6 }}
           >
-            {/* Basic Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2 flex items-center gap-2">
                 <FaUserEdit /> Basic Information
@@ -427,11 +502,11 @@ export default function Profile() {
                   Full Name
                 </label>
                 <input
-                  name="fullName"
-                  value={formData.fullName || ""}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                />
+                    name="fullName"
+                    value={formData.fullName || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
+                  />
               </div>
               
               <div>
@@ -449,7 +524,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Personal Details */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2 flex items-center gap-2">
                 <FaUserFriends /> Personal Details
@@ -463,13 +537,18 @@ export default function Profile() {
                   <DatePicker
                     selected={birthdayDate}
                     onChange={handleDateChange}
+                    onChangeRaw={(e) => e.preventDefault()}
                     dateFormat="yyyy-MM-dd"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                    placeholderText="Select date"
+                    placeholderText="Select your birthday"
                     showYearDropdown
                     scrollableYearDropdown
                     yearDropdownItemNumber={100}
                     maxDate={new Date()}
+                    isClearable
+                    openToDate={new Date(2000, 0, 1)}
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                 </div>
                 
@@ -480,7 +559,7 @@ export default function Profile() {
                   <input
                     name="age"
                     type="number"
-                    value={formData.age || calculateAge(birthdayDate) || ""}
+                    value={birthdayDate ? calculateAge(birthdayDate) : ""}
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
                     disabled
@@ -529,16 +608,15 @@ export default function Profile() {
                   value={formData.contactNo || ""}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                  placeholder="10-15 digits"
-                  maxLength="15"
+                  placeholder="10 digits only"
+                  maxLength="10"
                 />
                 {formData.contactNo && !validateContactNo(formData.contactNo) && (
-                  <p className="text-red-500 text-xs mt-1">Please enter a valid phone number (10-15 digits)</p>
+                  <p className="text-red-500 text-xs mt-1">Please enter a valid 10-digit phone number</p>
                 )}
               </div>
             </div>
 
-            {/* Interests Section */}
             <div className="md:col-span-2 space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2">
                 Interests & Preferences
@@ -557,38 +635,109 @@ export default function Profile() {
                 />
               </div>
               
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Preferences (type and press Enter or comma)
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.preferences?.map((pref, index) => (
-                    <motion.span
-                      key={index}
-                      className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                    >
-                      {pref}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Design Disciplines</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.designDisciplines.map(option => (
                       <button
-                        onClick={() => removePreference(index)}
-                        className="ml-1 text-amber-600 hover:text-amber-800"
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('designDisciplines', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.designDisciplines.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
                       >
-                        <FaTimes size={12} />
+                        {option}
                       </button>
-                    </motion.span>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  onKeyDown={handlePreferencesKeyDown}
-                  placeholder="Add a preference and press Enter"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-colors"
-                />
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Design Process</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.designProcess.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('designProcess', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.designProcess.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tools</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.tools.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('tools', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.tools.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Learning Goals</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.learningGoals.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('learningGoals', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.learningGoals.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Skill Level</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_OPTIONS.skillLevel.map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handlePreferencesChange('skillLevel', option)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedPreferences.skillLevel.includes(option)
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Account Info */}
             <div className="md:col-span-2 space-y-4">
               <h3 className="text-xl font-semibold text-amber-700 border-b border-amber-200 pb-2">
                 Account Information
@@ -631,7 +780,6 @@ export default function Profile() {
             </div>
           </motion.div>
 
-          {/* Action Buttons */}
           <motion.div 
             className="flex flex-col sm:flex-row justify-between gap-4 mt-10"
             initial={{ opacity: 0, y: 10 }}
@@ -653,14 +801,13 @@ export default function Profile() {
               </button>
             </div>
             <Link 
-              to="/home" 
+              to="/feed" 
               className="bg-white border border-amber-500 text-amber-600 hover:bg-amber-50 font-medium py-3 px-6 rounded-lg transition-colors text-center"
             >
               Back to Home
             </Link>
           </motion.div>
 
-          {/* Delete Account Section */}
           {isDeleteSectionOpen && (
             <motion.div 
               className="mt-6 p-6 bg-red-50 border border-red-200 rounded-lg"
@@ -685,8 +832,7 @@ export default function Profile() {
         </div>
       </motion.div>
 
-      {/* Followers Modal */}
-      {isFollowerModalOpen && (
+      {isPendingRequestsModalOpen && (
         <motion.div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           initial={{ opacity: 0 }}
@@ -701,82 +847,49 @@ export default function Profile() {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FaUserFriends /> Your Followers
+                <FaUserFriends /> Pending Follow Requests
               </h3>
               <button
-                onClick={() => setFollowerModalOpen(false)}
+                onClick={() => setPendingRequestsModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <FaTimes size={20} />
               </button>
             </div>
             <ul className="divide-y divide-gray-200">
-              {followers.length > 0 ? (
-                followers.map((f) => (
-                  <li key={f.id} className="py-3">
-                    <div className="flex items-center">
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900">{f.senderUsername}</p>
-                        <p className="text-xs text-gray-500">{f.senderEmail}</p>
+              {pendingRequests.length > 0 ? (
+                pendingRequests.map((req) => (
+                  <li key={req.id} className="py-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{usersMap[req.senderEmail] || req.senderEmail}</p>
+                        <p className="text-xs text-gray-500">{req.senderEmail}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccept(req.id);
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                        >
+                          <FaCheck className="mr-1" /> Accept
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelRequest(req.senderEmail);
+                          }}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                        >
+                          <FaTimes className="mr-1" /> Cancel
+                        </button>
                       </div>
                     </div>
                   </li>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">No followers yet</p>
-              )}
-            </ul>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Following Modal */}
-      {isFollowingModalOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div 
-            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FaUserFriends /> People You Follow
-              </h3>
-              <button
-                onClick={() => setFollowingModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-            <ul className="divide-y divide-gray-200">
-              {following.length > 0 ? (
-                following.map((f) => (
-                  <li key={f.id} className="py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="ml-3">
-                          <p className="text-sm font-medium text-gray-900">{f.receiverUsername}</p>
-                          <p className="text-xs text-gray-500">{f.receiverEmail}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleUnfollow(f.receiverEmail)}
-                        className="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
-                      >
-                        <FaTimes size={10} /> Unfollow
-                      </button>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">Not following anyone yet</p>
+                <p className="text-gray-500 text-center py-4">No pending requests</p>
               )}
             </ul>
           </motion.div>
