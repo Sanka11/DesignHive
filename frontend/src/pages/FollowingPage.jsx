@@ -8,7 +8,7 @@ import { GiHoneycomb, GiBee } from 'react-icons/gi';
 import { getFollowing } from "../api/followApi";
 
 export default function FollowingPage() {
-  const { user, loading: authLoading } = useAuth(); // Destructure `loading` from useAuth
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +18,10 @@ export default function FollowingPage() {
   const [usersMap, setUsersMap] = useState({});
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [userToUnfollow, setUserToUnfollow] = useState(null);
+  const [unfollowing, setUnfollowing] = useState(null);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for authentication state to load
+    if (authLoading) return;
     if (!user) {
       navigate('/login');
       return;
@@ -71,6 +72,7 @@ export default function FollowingPage() {
 
   const confirmUnfollow = async () => {
     try {
+      setUnfollowing(userToUnfollow);
       await axios.post("/follow/unfollow", null, {
         params: { 
           senderEmail: user.email, 
@@ -78,14 +80,15 @@ export default function FollowingPage() {
         }
       });
       showNotification('Unfollowed successfully', 'success');
-      setShowConfirmDialog(false);
-      setUserToUnfollow(null);
-      await fetchFollowing(); // Refresh the following list
+      // Remove the unfollowed user from the state immediately
+      setFollowing(prev => prev.filter(follow => follow.receiverEmail !== userToUnfollow));
     } catch (err) {
       console.error("Error unfollowing:", err);
       showNotification('Failed to unfollow', 'error');
+    } finally {
       setShowConfirmDialog(false);
       setUserToUnfollow(null);
+      setUnfollowing(null);
     }
   };
 
@@ -95,7 +98,6 @@ export default function FollowingPage() {
   };
 
   if (authLoading) {
-    // Show a loading indicator while authentication state is being restored
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
@@ -137,6 +139,7 @@ export default function FollowingPage() {
           </div>
         </motion.div>
       )}
+      
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <motion.div 
@@ -168,15 +171,45 @@ export default function FollowingPage() {
                 </button>
                 <button
                   onClick={confirmUnfollow}
+                  disabled={unfollowing === userToUnfollow}
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  <FaTimes /> Unfollow
+                  {unfollowing === userToUnfollow ? (
+                    <>
+                      <motion.div
+                        animate={{ 
+                          rotate: 360,
+                          y: [0, -5, 0]
+                        }}
+                        transition={{ 
+                          rotate: { 
+                            duration: 1, 
+                            repeat: Infinity, 
+                            ease: "linear" 
+                          },
+                          y: {
+                            duration: 0.5,
+                            repeat: Infinity,
+                            repeatType: "reverse"
+                          }
+                        }}
+                      >
+                        <GiBee className="text-sm" />
+                      </motion.div>
+                      Unfollowing...
+                    </>
+                  ) : (
+                    <>
+                      <FaTimes /> Unfollow
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </motion.div>
         </motion.div>
       )}
+      
       {/* Main Content */}
       <motion.div 
         className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden"
@@ -216,6 +249,7 @@ export default function FollowingPage() {
             <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
           </motion.div>
         </motion.div>
+        
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -224,6 +258,7 @@ export default function FollowingPage() {
           >
             <FaArrowLeft /> Back to Profile
           </button>
+          
           {/* Loading State */}
           {loading ? (
             <div className="text-center py-10">
@@ -265,6 +300,7 @@ export default function FollowingPage() {
                     className="py-4"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
                     transition={{ duration: 0.3 }}
                   >
                     <div className="flex justify-between items-center">
@@ -278,9 +314,38 @@ export default function FollowingPage() {
                       </div>
                       <button
                         onClick={() => handleUnfollowClick(follow.receiverEmail)}
-                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                        disabled={unfollowing === follow.receiverEmail}
+                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors min-w-[120px] justify-center"
                       >
-                        <FaTimes /> Unfollow
+                        {unfollowing === follow.receiverEmail ? (
+                          <>
+                            <motion.div
+                              animate={{ 
+                                rotate: 360,
+                                y: [0, -5, 0]
+                              }}
+                              transition={{ 
+                                rotate: { 
+                                  duration: 1, 
+                                  repeat: Infinity, 
+                                  ease: "linear" 
+                                },
+                                y: {
+                                  duration: 0.5,
+                                  repeat: Infinity,
+                                  repeatType: "reverse"
+                                }
+                              }}
+                            >
+                              <GiBee className="text-sm" />
+                            </motion.div>
+                            <span>Unfollowing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaTimes /> Unfollow
+                          </>
+                        )}
                       </button>
                     </div>
                   </motion.li>

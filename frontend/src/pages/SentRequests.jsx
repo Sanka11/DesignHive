@@ -15,6 +15,7 @@ export default function SentRequests() {
   const [isMounted, setIsMounted] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [usersMap, setUsersMap] = useState({});
+  const [cancelingRequest, setCancelingRequest] = useState(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,6 +61,7 @@ export default function SentRequests() {
 
   const handleCancelRequest = async (receiverEmail) => {
     try {
+      setCancelingRequest(receiverEmail);
       await axios.post("/follow/cancel", null, {
         params: { 
           senderEmail: user.email, 
@@ -67,11 +69,13 @@ export default function SentRequests() {
         }
       });
       showNotification('Follow request canceled successfully', 'success');
-      // Refresh the list after cancellation
-      fetchPendingRequests();
+      // Remove the canceled request from the state
+      setPendingRequests(prev => prev.filter(req => req.receiverEmail !== receiverEmail));
     } catch (err) {
       console.error("Error canceling request:", err);
       showNotification('Failed to cancel follow request', 'error');
+    } finally {
+      setCancelingRequest(null);
     }
   };
 
@@ -202,6 +206,7 @@ export default function SentRequests() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
+                    exit={{ opacity: 0, x: -100 }}
                   >
                     <div className="flex justify-between items-center">
                       <div>
@@ -214,9 +219,39 @@ export default function SentRequests() {
                       </div>
                       <button
                         onClick={() => handleCancelRequest(request.receiverEmail)}
-                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                        disabled={cancelingRequest === request.receiverEmail}
+                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors min-w-[150px] justify-center"
                       >
-                        <FaTimes /> Cancel Request
+                        {cancelingRequest === request.receiverEmail ? (
+                          <>
+                            <motion.div
+                              animate={{ 
+                                rotate: 360,
+                                y: [0, -5, 0]
+                              }}
+                              transition={{ 
+                                rotate: { 
+                                  duration: 1, 
+                                  repeat: Infinity, 
+                                  ease: "linear" 
+                                },
+                                y: {
+                                  duration: 0.5,
+                                  repeat: Infinity,
+                                  repeatType: "reverse"
+                                }
+                              }}
+                              className="text-lg"
+                            >
+                              <GiBee />
+                            </motion.div>
+                            <span>Canceling...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaTimes /> Cancel Request
+                          </>
+                        )}
                       </button>
                     </div>
                   </motion.li>

@@ -3,12 +3,12 @@ import { useAuth } from "../auth/useAuth";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from 'framer-motion';
-import { FaUserFriends, FaTimes, FaArrowLeft, FaCheck, FaQuestion } from 'react-icons/fa';
+import { FaUserFriends, FaTimes, FaArrowLeft, FaQuestion } from 'react-icons/fa';
 import { GiHoneycomb, GiBee } from 'react-icons/gi';
 import { getFollowers } from "../api/followApi";
 
 export default function FollowersPage() {
-  const { user, loading: authLoading } = useAuth(); // Destructure `loading` from useAuth
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +18,10 @@ export default function FollowersPage() {
   const [usersMap, setUsersMap] = useState({});
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [userToRemove, setUserToRemove] = useState(null);
+  const [removing, setRemoving] = useState(null);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for authentication state to load
+    if (authLoading) return;
     if (!user) {
       navigate('/login');
       return;
@@ -71,21 +72,23 @@ export default function FollowersPage() {
 
   const confirmRemove = async () => {
     try {
+      setRemoving(userToRemove);
       await axios.post("/follow/remove-follower", null, {
         params: { 
-          receiverEmail: user.email, // current user's email (the one who is being followed)
-          senderEmail: userToRemove  // follower's email (the one to remove)
+          receiverEmail: user.email,
+          senderEmail: userToRemove
         }
       });
       showNotification('Follower removed successfully', 'success');
-      setShowConfirmDialog(false);
-      setUserToRemove(null);
-      fetchFollowers(); // Refresh the list
+      // Remove the follower from the state immediately
+      setFollowers(prev => prev.filter(follower => follower.senderEmail !== userToRemove));
     } catch (err) {
       console.error("Error removing follower:", err);
       showNotification('Failed to remove follower', 'error');
+    } finally {
       setShowConfirmDialog(false);
       setUserToRemove(null);
+      setRemoving(null);
     }
   };
 
@@ -95,7 +98,6 @@ export default function FollowersPage() {
   };
 
   if (authLoading) {
-    // Show a loading indicator while authentication state is being restored
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
@@ -137,7 +139,7 @@ export default function FollowersPage() {
           </div>
         </motion.div>
       )}
-
+      
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <motion.div 
@@ -169,16 +171,45 @@ export default function FollowersPage() {
                 </button>
                 <button
                   onClick={confirmRemove}
+                  disabled={removing === userToRemove}
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  <FaTimes /> Remove
+                  {removing === userToRemove ? (
+                    <>
+                      <motion.div
+                        animate={{ 
+                          rotate: 360,
+                          y: [0, -5, 0]
+                        }}
+                        transition={{ 
+                          rotate: { 
+                            duration: 1, 
+                            repeat: Infinity, 
+                            ease: "linear" 
+                          },
+                          y: {
+                            duration: 0.5,
+                            repeat: Infinity,
+                            repeatType: "reverse"
+                          }
+                        }}
+                      >
+                        <GiBee className="text-sm" />
+                      </motion.div>
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <FaTimes /> Remove
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </motion.div>
         </motion.div>
       )}
-
+      
       {/* Main Content */}
       <motion.div 
         className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden"
@@ -218,6 +249,7 @@ export default function FollowersPage() {
             <GiHoneycomb className="text-amber-200 text-xl opacity-60" />
           </motion.div>
         </motion.div>
+        
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -226,7 +258,7 @@ export default function FollowersPage() {
           >
             <FaArrowLeft /> Back to Profile
           </button>
-
+          
           {/* Loading State */}
           {loading ? (
             <div className="text-center py-10">
@@ -268,6 +300,7 @@ export default function FollowersPage() {
                     className="py-4"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
                     transition={{ duration: 0.3 }}
                   >
                     <div className="flex justify-between items-center">
@@ -281,9 +314,38 @@ export default function FollowersPage() {
                       </div>
                       <button
                         onClick={() => handleRemoveClick(follower.senderEmail)}
-                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                        disabled={removing === follower.senderEmail}
+                        className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors min-w-[120px] justify-center"
                       >
-                        <FaTimes /> Remove
+                        {removing === follower.senderEmail ? (
+                          <>
+                            <motion.div
+                              animate={{ 
+                                rotate: 360,
+                                y: [0, -5, 0]
+                              }}
+                              transition={{ 
+                                rotate: { 
+                                  duration: 1, 
+                                  repeat: Infinity, 
+                                  ease: "linear" 
+                                },
+                                y: {
+                                  duration: 0.5,
+                                  repeat: Infinity,
+                                  repeatType: "reverse"
+                                }
+                              }}
+                            >
+                              <GiBee className="text-sm" />
+                            </motion.div>
+                            <span>Removing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaTimes /> Remove
+                          </>
+                        )}
                       </button>
                     </div>
                   </motion.li>

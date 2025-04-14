@@ -77,13 +77,14 @@ export default function Profile() {
     skillLevel: []
   });
   const [usersMap, setUsersMap] = useState({});
+  const [cancelingRequest, setCancelingRequest] = useState(null);
+  const [acceptingRequest, setAcceptingRequest] = useState(null);
 
   useEffect(() => {
     setIsMounted(true);
     fetchAllUsers();
     loadFollowData();
     
-    // Initialize birthday date if it exists in user data
     if (user.birthday) {
       const date = new Date(user.birthday);
       if (!isNaN(date.getTime())) {
@@ -168,27 +169,35 @@ export default function Profile() {
 
   const handleAccept = async (id) => {
     try {
+      setAcceptingRequest(id);
       await acceptFollowRequest(id);
-      loadFollowData();
       showNotification('Follow request accepted', 'success');
+      // Remove the accepted request from the state
+      setPendingRequests(prev => prev.filter(req => req.id !== id));
     } catch (error) {
       showNotification('Failed to accept request', 'error');
+    } finally {
+      setAcceptingRequest(null);
     }
   };
 
-  const handleCancelRequest = async (receiverEmail) => {
+  const handleCancelRequest = async (senderEmail) => {
     try {
+      setCancelingRequest(senderEmail);
       await axios.post("/follow/cancel", null, {
         params: { 
-          senderEmail: user.email, 
-          receiverEmail 
+          senderEmail, 
+          receiverEmail: user.email 
         }
       });
       showNotification('Follow request canceled successfully', 'success');
-      loadFollowData();
+      // Remove the canceled request from the state
+      setPendingRequests(prev => prev.filter(req => req.senderEmail !== senderEmail));
     } catch (err) {
       console.error("Error canceling request:", err);
       showNotification('Failed to cancel follow request', 'error');
+    } finally {
+      setCancelingRequest(null);
     }
   };
 
@@ -859,7 +868,14 @@ export default function Profile() {
             <ul className="divide-y divide-gray-200">
               {pendingRequests.length > 0 ? (
                 pendingRequests.map((req) => (
-                  <li key={req.id} className="py-3">
+                  <motion.li 
+                    key={req.id} 
+                    className="py-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{usersMap[req.senderEmail] || req.senderEmail}</p>
@@ -871,25 +887,92 @@ export default function Profile() {
                             e.stopPropagation();
                             handleAccept(req.id);
                           }}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                          disabled={acceptingRequest === req.id}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center min-w-[100px] justify-center"
                         >
-                          <FaCheck className="mr-1" /> Accept
+                          {acceptingRequest === req.id ? (
+                            <>
+                              <motion.div
+                                animate={{ 
+                                  rotate: 360,
+                                  y: [0, -5, 0]
+                                }}
+                                transition={{ 
+                                  rotate: { 
+                                    duration: 1, 
+                                    repeat: Infinity, 
+                                    ease: "linear" 
+                                  },
+                                  y: {
+                                    duration: 0.5,
+                                    repeat: Infinity,
+                                    repeatType: "reverse"
+                                  }
+                                }}
+                                className="mr-1"
+                              >
+                                <GiBee className="text-sm" />
+                              </motion.div>
+                              Accepting...
+                            </>
+                          ) : (
+                            <>
+                              <FaCheck className="mr-1" /> Accept
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleCancelRequest(req.senderEmail);
                           }}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm flex items-center"
+                          disabled={cancelingRequest === req.senderEmail}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm flex items-center min-w-[100px] justify-center"
                         >
-                          <FaTimes className="mr-1" /> Cancel
+                          {cancelingRequest === req.senderEmail ? (
+                            <>
+                              <motion.div
+                                animate={{ 
+                                  rotate: 360,
+                                  y: [0, -5, 0]
+                                }}
+                                transition={{ 
+                                  rotate: { 
+                                    duration: 1, 
+                                    repeat: Infinity, 
+                                    ease: "linear" 
+                                  },
+                                  y: {
+                                    duration: 0.5,
+                                    repeat: Infinity,
+                                    repeatType: "reverse"
+                                  }
+                                }}
+                                className="mr-1"
+                              >
+                                <GiBee className="text-sm" />
+                              </motion.div>
+                              Canceling...
+                            </>
+                          ) : (
+                            <>
+                              <FaTimes className="mr-1" /> Cancel
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
-                  </li>
+                  </motion.li>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">No pending requests</p>
+                <motion.div 
+                  className="text-center py-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <FaUserFriends className="text-4xl text-amber-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No pending requests</p>
+                </motion.div>
               )}
             </ul>
           </motion.div>
