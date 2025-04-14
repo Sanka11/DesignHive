@@ -1,13 +1,13 @@
 import React, { useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaBell, FaBars, FaTimes, FaSearch, FaThumbsUp, FaSignOutAlt, FaUser, FaQuestionCircle } from "react-icons/fa";
+import { FaBell, FaBars, FaTimes, FaThumbsUp, FaSignOutAlt, FaUser, FaQuestionCircle, FaSearch } from "react-icons/fa";
 import { RiDashboardLine } from "react-icons/ri";
 import { GiBee } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth/useAuth";
 import DesignHiveLogo from "../assets/DesignHiveLogo.png";
 import defaultProfilePic from "../assets/default-profile.png"; 
-
+import { MdAdd } from "react-icons/md";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -16,7 +16,6 @@ const Navbar = () => {
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const profileRef = useRef(null);
 
@@ -25,7 +24,6 @@ const Navbar = () => {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const toggleProfile = () => setProfileOpen(!profileOpen);
-  const toggleSearch = () => setSearchOpen(!searchOpen);
 
   const handleLogout = async () => {
     try {
@@ -36,6 +34,8 @@ const Navbar = () => {
       navigate('/login');
     }
   };
+
+  const closeMobileMenu = () => setMenuOpen(false);
 
   React.useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -56,18 +56,22 @@ const Navbar = () => {
   if (!user) return null;
 
   const profilePic = user.profileImagePath
-  ? user.profileImagePath.startsWith("http")
-    ? user.profileImagePath
-    : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`
-  : defaultProfilePic;
-
+    ? user.profileImagePath.startsWith("http")
+      ? user.profileImagePath
+      : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`
+    : defaultProfilePic;
 
   const firstName = user.username?.split(' ')[0] || 'User';
   const userEmail = user.email || '';
 
   const handleImgError = (e) => {
     e.target.onerror = null;
-    e.target.src = "/default-profile.png"; // Place this image in your public/ folder
+    e.target.src = "/default-profile.png";
+  };
+
+  // Check active route
+  const isActive = (path) => {
+    return location.pathname === path;
   };
 
   return (
@@ -78,31 +82,17 @@ const Navbar = () => {
             <Link to="/feed" className="flex items-center">
               <img src={DesignHiveLogo} alt="DesignHive" className="h-10 w-auto" />
             </Link>
-            <button onClick={toggleSearch} className="md:hidden p-2 rounded-full hover:bg-amber-100 transition" aria-label="Search">
-              <FaSearch className="text-amber-800" />
-            </button>
           </div>
 
-          <div className={`hidden md:flex items-center mx-4 flex-1 max-w-2xl ${searchOpen ? "md:hidden" : ""}`}>
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search designs, skills, or users..."
-                className="w-full py-2 px-4 pl-10 rounded-full border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 placeholder-amber-800/70"
-              />
-              <FaSearch className="absolute left-3 top-3 text-amber-600" />
-            </div>
-          </div>
+          {/* Empty div to maintain space where search was */}
+          <div className="hidden md:flex items-center mx-4 flex-1 max-w-2xl"></div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <NavLink to="/feed" icon={<RiDashboardLine />}>Feed</NavLink>
-            <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
-
-            <NavLink to="/share">New Post</NavLink>
-            <NavLink to="/learning-planhome">Learning Plans</NavLink>
-            <NavLink to="/manageposts">Manage Posts</NavLink>
-            
-
+            <NavLink to="/feed" icon={<RiDashboardLine />} isActive={isActive("/feed")}>Feed</NavLink>
+            <NavLink to="/recommended" icon={<FaThumbsUp />} isActive={isActive("/recommended")}>Recommended</NavLink>
+            <NavLink to="/explore-plans" isActive={isActive("/explore-plans")}>Explore Plans</NavLink>
+            <NavLink to="/learning-planhome" isActive={isActive("/learning-planhome")}>Create Plans</NavLink>     
+            <NavLink to="/manageposts" isActive={isActive("/manageposts")}>Manage Posts</NavLink>
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">
               <FaBell className="text-amber-800 text-xl" />
@@ -142,6 +132,7 @@ const Navbar = () => {
                       </div>
                     </div>
                     <DropdownLink to="/profile" icon={<FaUser className="text-amber-700" />}>My Profile</DropdownLink>
+                    <DropdownLink to="/newpost" icon={<MdAdd className="text-amber-700" />}>New Post</DropdownLink>
                     <DropdownLink to="/help" icon={<FaQuestionCircle className="text-amber-700" />}>Help Center</DropdownLink>
                     <div className="border-t border-amber-100">
                       <button onClick={handleLogout} className="w-full text-left px-4 py-3 hover:bg-amber-100 transition flex items-center space-x-2 text-red-600">
@@ -161,19 +152,6 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-
-        {searchOpen && (
-          <div className="md:hidden my-3">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full py-2 px-4 pl-10 rounded-full border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 placeholder-amber-800/70"
-              />
-              <FaSearch className="absolute left-3 top-3 text-amber-600" />
-            </div>
-          </div>
-        )}
       </div>
 
       <AnimatePresence>
@@ -197,14 +175,15 @@ const Navbar = () => {
                   <p className="text-xs text-amber-800/70 break-all">{userEmail}</p>
                 </div>
               </div>
-              <MobileNavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</MobileNavLink>
-              <MobileNavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</MobileNavLink>
-              <MobileNavLink to="/manageposts">Manage Posts</MobileNavLink>
-              <MobileNavLink to="/learning-planhome">Learning Plans</MobileNavLink>
+              <MobileNavLink to="/feed" icon={<RiDashboardLine />} isActive={isActive("/feed")} onClick={closeMobileMenu}>Feed</MobileNavLink>
+              <MobileNavLink to="/recommended" icon={<FaThumbsUp />} isActive={isActive("/recommended")} onClick={closeMobileMenu}>Recommended</MobileNavLink>
+              <MobileNavLink to="/manageposts" isActive={isActive("/manageposts")} onClick={closeMobileMenu}>Manage Posts</MobileNavLink>
+              <MobileNavLink to="/explore-plans" isActive={isActive("/explore-plans")} onClick={closeMobileMenu}>Explore Plans</MobileNavLink>
+              <MobileNavLink to="/learning-planhome" isActive={isActive("/learning-planhome")} onClick={closeMobileMenu}>Create Plans</MobileNavLink>
               <div className="pt-2 border-t border-amber-200">
-                <MobileNavLink to="/profile" icon={<FaUser />}>Profile</MobileNavLink>
-                <MobileNavLink to="/help" icon={<FaQuestionCircle />}>Help Center</MobileNavLink>
-                <button onClick={handleLogout} className="w-full text-left py-3 px-4 text-red-500 hover:bg-red-50 rounded-lg transition flex items-center space-x-3">
+                <MobileNavLink to="/profile" icon={<FaUser />} isActive={isActive("/profile")} onClick={closeMobileMenu}>Profile</MobileNavLink>
+                <MobileNavLink to="/help" icon={<FaQuestionCircle />} isActive={isActive("/help")} onClick={closeMobileMenu}>Help Center</MobileNavLink>
+                <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="w-full text-left py-3 px-4 text-red-500 hover:bg-red-50 rounded-lg transition flex items-center space-x-3">
                   <FaSignOutAlt />
                   <span>Logout</span>
                 </button>
@@ -217,15 +196,30 @@ const Navbar = () => {
   );
 };
 
-const NavLink = ({ to, children, icon }) => (
-  <Link to={to} className="flex items-center space-x-1 px-3 py-2 rounded-lg hover:bg-amber-100 hover:text-amber-900 transition font-medium text-amber-800">
+const NavLink = ({ to, children, icon, isActive }) => (
+  <Link 
+    to={to} 
+    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition font-medium ${
+      isActive 
+        ? "bg-amber-200 text-amber-900" 
+        : "text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+    }`}
+  >
     {icon && <span className="text-lg">{icon}</span>}
     <span>{children}</span>
   </Link>
 );
 
-const MobileNavLink = ({ to, children, icon }) => (
-  <Link to={to} className="flex items-center space-x-3 py-3 px-4 hover:bg-amber-100 rounded-lg transition font-medium text-amber-800">
+const MobileNavLink = ({ to, children, icon, isActive, onClick }) => (
+  <Link 
+    to={to} 
+    onClick={onClick}
+    className={`flex items-center space-x-3 py-3 px-4 rounded-lg transition font-medium ${
+      isActive 
+        ? "bg-amber-200 text-amber-900" 
+        : "text-amber-800 hover:bg-amber-100"
+    }`}
+  >
     {icon && <span className="text-xl text-amber-700">{icon}</span>}
     <span>{children}</span>
   </Link>
