@@ -2,21 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProgressBar from "../components/ProgressBar";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../auth/useAuth"; // Import your auth context
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get the authenticated user from your auth context
   const [plans, setPlans] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const userId = "user123";
-
   useEffect(() => {
+    if (!user) return; // Don't fetch if user isn't available
+
     const fetchPlans = async () => {
       try {
         const response = await fetch(
-          `http://localhost:9090/api/learning-plans/user/${userId}`
+          `http://localhost:9090/api/learning-plans/user/${user.id}` // Use user.email or user.id
         );
         if (!response.ok) throw new Error("Failed to fetch plans");
         const data = await response.json();
@@ -29,7 +31,7 @@ const HomePage = () => {
       }
     };
     fetchPlans();
-  }, []);
+  }, [user]); // Add user to dependency array
 
   const handlePlanClick = (planId) => navigate(`/learning-plan/${planId}`);
   const handleCreateNewPlan = () => navigate("/create-plan");

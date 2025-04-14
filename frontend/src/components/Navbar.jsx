@@ -101,7 +101,7 @@ const Navbar = () => {
             <NavLink to="/share">New Post</NavLink>
             <NavLink to="/learning">Learning Plans</NavLink>
             <NavLink to="/manageposts">Manage Posts</NavLink>
-            <NavLink to="/learning">Learning Plans</NavLink>
+            <NavLink to="/learning-planhome">Learning Plans</NavLink>
 
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">

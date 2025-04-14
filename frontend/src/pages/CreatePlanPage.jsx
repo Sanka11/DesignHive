@@ -2,8 +2,10 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "../auth/useAuth";
 
 const CreatePlanPage = () => {
+  const { user } = useAuth(); // Get authenticated user from auth context
   const [plan, setPlan] = useState({
     title: "",
     description: "",
@@ -13,8 +15,8 @@ const CreatePlanPage = () => {
     tasks: [{ title: "", description: "", completed: false }],
   });
 
-  const [error, setError] = useState(""); // State for displaying error messages
-  const [showSuccess, setShowSuccess] = useState(false); // State for showing success message
+  const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -42,25 +44,21 @@ const CreatePlanPage = () => {
   };
 
   const validateForm = () => {
-    // Check for plan title
     if (!plan.title.trim()) {
       setError("Title is required.");
       return false;
     }
 
-    // Check for plan description
     if (!plan.description.trim()) {
       setError("Description is required.");
       return false;
     }
 
-    // Check if start date is before end date
     if (new Date(plan.startDate) > new Date(plan.endDate)) {
       setError("Start Date cannot be later than End Date.");
       return false;
     }
 
-    // Validate tasks
     for (let i = 0; i < plan.tasks.length; i++) {
       const task = plan.tasks[i];
       if (!task.title.trim() || !task.description.trim()) {
@@ -69,7 +67,7 @@ const CreatePlanPage = () => {
       }
     }
 
-    setError(""); // Reset any previous error message
+    setError("");
     return true;
   };
 
@@ -81,22 +79,32 @@ const CreatePlanPage = () => {
     }
 
     try {
-      const payload = { ...plan, userId: "user123" };
+      const payload = {
+        ...plan,
+        userId: user.id, // Use the authenticated user's email or ID
+      };
+
       await axios.post("http://localhost:9090/api/learning-plans", payload);
 
-      // Show success animation
       setShowSuccess(true);
 
-      // Wait for animation to complete before navigating
       setTimeout(() => {
         navigate("/learning-planhome");
-      }, 3000); // Increased from 2000ms to 3000ms to ensure visibility
+      }, 3000);
     } catch (error) {
       console.error(error);
       setError("Failed to create plan. Please try again.");
     }
   };
 
+  // Add user check at the beginning of component rendering
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Please log in to create a learning plan</p>
+      </div>
+    );
+  }
   return (
     <motion.div
       className="max-w-4xl mx-auto p-6 bg-yellow-50 rounded-2xl shadow-xl mt-20"
