@@ -22,6 +22,10 @@ import FollowingPage from "./pages/FollowingPage";
 import FollowersPage from "./pages/FollowersPage";
 import ManagePosts from './pages/ManagePosts';
 import RecommendedPost from "./pages/RecommendedPost";
+import HomeLearningPlan from "./pages/HomeLeraningPlan.jsx";
+import CreatePlanPage from "./pages/CreatePlanPage.jsx";
+import LearningPlanPage from "./pages/LearningPlanPage.jsx";
+
 
 function App() {
   const { user } = useAuth(); // ✅ this defines user!
@@ -48,15 +52,41 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
 
+
         <Route path="/Feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
         <Route path="/Post" element={<ProtectedRoute><Post /></ProtectedRoute>} />
         <Route path="/newpost" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
         <Route path="/manageposts" element={<ManagePosts />} />
         <Route path="/recommended" element={<RecommendedPost />} />
-
-
         {/* Add more routes here under the Navbar layout */}
+        <Route
+          path="/learning-planhome"
+          element={
+            <ProtectedRoute>
+              <HomeLearningPlan />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/create-plan"
+          element={
+            <ProtectedRoute>
+              <CreatePlanPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/learning-plan/:id"
+          element={
+            <ProtectedRoute>
+              <LearningPlanPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
+      
 
 
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

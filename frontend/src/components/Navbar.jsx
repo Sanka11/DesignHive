@@ -97,8 +97,12 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             <NavLink to="/feed" icon={<RiDashboardLine />}>Feed</NavLink>
             <NavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</NavLink>
+
+            <NavLink to="/share">New Post</NavLink>
+            <NavLink to="/learning-planhome">Learning Plans</NavLink>
             <NavLink to="/manageposts">Manage Posts</NavLink>
-            <NavLink to="/learning">Learning Plans</NavLink>
+            
+
 
             <button className="p-2 relative rounded-full hover:bg-amber-100 transition">
               <FaBell className="text-amber-800 text-xl" />
@@ -196,7 +200,7 @@ const Navbar = () => {
               <MobileNavLink to="/dashboard" icon={<RiDashboardLine />}>Feed</MobileNavLink>
               <MobileNavLink to="/recommended" icon={<FaThumbsUp />}>Recommended</MobileNavLink>
               <MobileNavLink to="/manageposts">Manage Posts</MobileNavLink>
-              <MobileNavLink to="/learning">Learning Plans</MobileNavLink>
+              <MobileNavLink to="/learning-planhome">Learning Plans</MobileNavLink>
               <div className="pt-2 border-t border-amber-200">
                 <MobileNavLink to="/profile" icon={<FaUser />}>Profile</MobileNavLink>
                 <MobileNavLink to="/help" icon={<FaQuestionCircle />}>Help Center</MobileNavLink>
