@@ -19,11 +19,13 @@ const Feed = () => {
       setIsLoadingPosts(true);
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts`);
       console.log("📦 First post from backend:", res.data[0]);
+
       const sortedPosts = res.data.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt);
         const dateB = new Date(b.updatedAt || b.createdAt);
-        return dateB - dateA; // Latest first
+        return dateB - dateA;
       });
+
       setPosts(sortedPosts);
     } catch (err) {
       console.error("❌ Error fetching posts:", err);
@@ -36,6 +38,7 @@ const Feed = () => {
     try {
       setIsLoadingUser(true);
       const storedUser = localStorage.getItem("loggedInUser");
+
       if (!storedUser) {
         console.warn("⚠️ No 'loggedInUser' found in localStorage.");
         return;
@@ -62,6 +65,12 @@ const Feed = () => {
     return defaultProfilePic;
   };
 
+
+  const handleNewComment = ({ comment, postId }) => {
+    console.log(`📝 New comment on post ${postId}:`, comment);
+  };
+
+
   useEffect(() => {
     fetchPosts();
     fetchUserFromLocalStorage();
@@ -79,10 +88,7 @@ const Feed = () => {
                 <p className="text-amber-800">Loading profile...</p>
               </div>
             ) : user ? (
-              <ProfileCard 
-                user={user} 
-                profilePic={getProfilePic(user)}
-              />
+              <ProfileCard user={user} profilePic={getProfilePic(user)} />
             ) : (
               <div className="bg-amber-100 p-6 rounded-xl shadow-lg border border-amber-200">
                 <p className="text-amber-800 text-center">No user found</p>
@@ -121,11 +127,23 @@ const Feed = () => {
                     <p className="text-amber-800">Gathering honey... (loading posts)</p>
                   </div>
                 ) : posts.length > 0 ? (
+
+                  posts.map((post) => (
+                    <Post
+                      key={post.id}
+                      post={post}
+                      onCommentAdded={({ comment }) =>
+                        handleNewComment({ comment, postId: post.id })
+                      }
+                    />
+                  ))
+
                   <div className="space-y-4">
                     {posts.map((post) => (
                       <Post key={post.id} post={post} />
                     ))}
                   </div>
+
                 ) : (
                   <div className="bg-amber-100 p-6 rounded-xl shadow-lg text-center border border-amber-200">
                     <GiHoneycomb className="mx-auto text-4xl text-amber-500 mb-3" />
