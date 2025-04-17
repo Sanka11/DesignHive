@@ -121,28 +121,24 @@ const Feed = () => {
               )}
 
               <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
-                {isLoadingPosts ? (
-                  <div className="flex flex-col items-center justify-center py-12 bg-amber-100 rounded-xl shadow-lg border border-amber-200">
-                    <FiLoader className="animate-spin text-3xl text-amber-600 mb-4" />
-                    <p className="text-amber-800">Gathering honey... (loading posts)</p>
-                  </div>
-                ) : posts.length > 0 ? (
+              {isLoadingPosts ? (
+  <div className="flex flex-col items-center justify-center py-12 bg-amber-100 rounded-xl shadow-lg border border-amber-200">
+    <FiLoader className="animate-spin text-3xl text-amber-600 mb-4" />
+    <p className="text-amber-800">Gathering honey... (loading posts)</p>
+  </div>
+) : posts.length > 0 ? (
+  <div className="space-y-4">
+    {posts.map((post) => (
+      <Post
+        key={post.id}
+        post={post}
+        onCommentAdded={({ comment }) =>
+          handleNewComment({ comment, postId: post.id })
+        }
+      />
+    ))}
+  </div>
 
-                  posts.map((post) => (
-                    <Post
-                      key={post.id}
-                      post={post}
-                      onCommentAdded={({ comment }) =>
-                        handleNewComment({ comment, postId: post.id })
-                      }
-                    />
-                  ))
-
-                  <div className="space-y-4">
-                    {posts.map((post) => (
-                      <Post key={post.id} post={post} />
-                    ))}
-                  </div>
 
                 ) : (
                   <div className="bg-amber-100 p-6 rounded-xl shadow-lg text-center border border-amber-200">
@@ -161,7 +157,8 @@ const Feed = () => {
         </div>
       </div>
     </div>
-  );
+  
+              );
 };
 
 export default Feed;
