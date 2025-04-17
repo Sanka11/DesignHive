@@ -51,5 +51,18 @@ public class AuthController {
         }
     }
     
+    @PutMapping("/reset-password")
+public ResponseEntity<?> resetPassword(
+        @RequestParam String email,
+        @RequestParam String username,
+        @RequestParam String newPassword) {
+    try {
+        String result = authService.resetPasswordWithUsername(email, username, newPassword);
+        return ResponseEntity.ok(result);
+    } catch (Exception e) {
+        return ResponseEntity.status(400).body("Reset failed: " + e.getMessage());
+    }
+}
+
 
 }
