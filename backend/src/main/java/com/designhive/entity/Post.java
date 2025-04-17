@@ -27,6 +27,7 @@ public class Post {
     private String profileImagePath;
 
     private Date createdAt;
+    private Date updatedAt;
 
     public Post() {
         this.likes = 0;
@@ -156,6 +157,14 @@ public class Post {
     public Date getCreatedAt() {
         return createdAt;
     }
+
+    public Date getUpdatedAt() {
+    return updatedAt;
+}
+
+public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
+}
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;

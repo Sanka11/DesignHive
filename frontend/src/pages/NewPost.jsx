@@ -28,16 +28,20 @@ const NewPost = ({ user, refreshPosts }) => {
   const profilePic = useMemo(() => {
     if (user?.profileImagePath) {
       return user.profileImagePath.startsWith("http")
-  ? user.profileImagePath
-  : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`;
-
+        ? user.profileImagePath
+        : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${
+            user.profileImagePath
+          }`;
     }
     return DEFAULT_PROFILE_PIC;
   }, [user]);
 
   const selectOptions = {
     designDisciplines: [
-      { value: "UI Design", icon: <RiPencilRulerLine className="inline mr-2" /> },
+      {
+        value: "UI Design",
+        icon: <RiPencilRulerLine className="inline mr-2" />,
+      },
       { value: "UX Design", icon: <FiLayers className="inline mr-2" /> },
       { value: "Interaction Design", icon: <FiTool className="inline mr-2" /> },
       { value: "Motion Design", icon: <Video className="inline mr-2" /> },
@@ -50,13 +54,7 @@ const NewPost = ({ user, refreshPosts }) => {
       "User Research",
       "Usability Testing",
     ],
-    tools: [
-     "Figma",
-     "Adobe XD",
-     "Sketch",
-     "Blender",
-     "After Effects"
-    ],
+    tools: ["Figma", "Adobe XD", "Sketch", "Blender", "After Effects"],
     learningGoals: [
       "Career Development",
       "Improving UI/UX Skills",
@@ -151,8 +149,8 @@ const NewPost = ({ user, refreshPosts }) => {
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.match("image.*") || file.type.match("video.*")
+    const files = Array.from(e.dataTransfer.files).filter(
+      (file) => file.type.match("image.*") || file.type.match("video.*")
     );
 
     if (files.length > 0) {
@@ -172,12 +170,20 @@ const NewPost = ({ user, refreshPosts }) => {
     }
 
     const validFiles = files.filter((file) => {
-      const validTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4", "video/webm", "video/ogg"];
+      const validTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+      ];
       if (!validTypes.includes(file.type)) {
         toast.error(`Unsupported file type: ${file.name}`);
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
         toast.error(`File too large (max 10MB): ${file.name}`);
         return false;
       }
@@ -250,7 +256,6 @@ const NewPost = ({ user, refreshPosts }) => {
         competitionInvolvement,
         mediaUrls,
       });
-      
 
       toast.dismiss();
       toast.success("✅ Post created successfully!");
@@ -266,7 +271,14 @@ const NewPost = ({ user, refreshPosts }) => {
     }
   };
 
-  const Dropdown = ({ label, options, value, onChange, isMulti = false, icon }) => (
+  const Dropdown = ({
+    label,
+    options,
+    value,
+    onChange,
+    isMulti = false,
+    icon,
+  }) => (
     <div className="mb-3">
       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
         {icon && <span className="mr-2">{icon}</span>}
@@ -398,7 +410,7 @@ const NewPost = ({ user, refreshPosts }) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Media Attachments
         </label>
-        
+
         {/* Drag and Drop Area */}
         <div
           className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center mb-4 transition-colors ${

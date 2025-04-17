@@ -7,6 +7,7 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
   const {
     content,
     createdAt,
+    updatedAt,
     mediaUrls = [],
     user = {},
     likes = 0,
@@ -24,7 +25,7 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
       let date;
 
       if (createdAt && typeof createdAt.toDate === "function") {
-        date = createdAt.toDate(); // Firestore Timestamp
+        date = createdAt.toDate();
       } else if (createdAt?.seconds) {
         date = new Date(createdAt.seconds * 1000);
       } else {
@@ -40,13 +41,21 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
     }
   };
 
+  const isUpdated =
+    updatedAt &&
+    createdAt &&
+    updatedAt !== createdAt &&
+    new Date(updatedAt).getTime() !== new Date(createdAt).getTime();
+
   const getVideoMimeType = (url) => {
     const ext = url.split(".").pop().split("?")[0].toLowerCase();
-    return {
-      mp4: "video/mp4",
-      webm: "video/webm",
-      ogg: "video/ogg",
-    }[ext] || "";
+    return (
+      {
+        mp4: "video/mp4",
+        webm: "video/webm",
+        ogg: "video/ogg",
+      }[ext] || ""
+    );
   };
 
   const allTags = [
@@ -60,7 +69,6 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
 
   return (
     <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-100 mb-6">
-      {/* Header */}
       <div className="flex items-center p-4 space-x-4">
         <img
           src={user.avatar || DEFAULT_PROFILE_PIC}
@@ -72,16 +80,23 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
           }}
         />
         <div>
-          <h2 className="font-semibold">{user.name || "User"}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-gray-800">
+              {user.name || "User"}
+            </h2>
+            {isUpdated && (
+              <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                🛠 Updated
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">{getTimeDisplay()}</p>
         </div>
       </div>
 
-      {/* Content & Tags */}
       <div className="px-4 pb-4">
         <p className="mb-2 text-gray-800 whitespace-pre-line">{content}</p>
 
-        {/* Tags BEFORE media */}
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {allTags.map((tag, index) => (
@@ -95,7 +110,6 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
           </div>
         )}
 
-        {/* Media */}
         {mediaUrls.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             {mediaUrls.map((url, i) => {
@@ -121,9 +135,10 @@ const ManagePostCard = ({ post, onEdit, onDelete }) => {
           </div>
         )}
 
-        {/* Reactions & Actions */}
         <div className="text-sm text-gray-600 flex items-center justify-between">
-          <span>{likes} {likes === 1 ? "Like" : "Likes"}</span>
+          <span>
+            {likes} {likes === 1 ? "Like" : "Likes"}
+          </span>
           <div className="space-x-2">
             <button
               onClick={() => onEdit(post)}
