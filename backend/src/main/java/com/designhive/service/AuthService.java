@@ -63,4 +63,20 @@ public class AuthService {
 
         return jwtUtil.generateToken(user.getEmail());
     }
+
+    public void changePassword(String email, String currentPassword, String newPassword) throws Exception {
+        User user = userRepository.getUserByEmail(email);
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+    
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new Exception("Current password is incorrect");
+        }
+    
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.saveUser(user);
+    }
+    
+    
 }

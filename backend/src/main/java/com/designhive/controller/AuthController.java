@@ -38,4 +38,18 @@ public class AuthController {
             return ResponseEntity.status(401).body("Login failed: " + e.getMessage());
         }
     }
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestParam String email,
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword) {
+        try {
+            authService.changePassword(email, currentPassword, newPassword);
+            return ResponseEntity.ok("Password updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+
 }

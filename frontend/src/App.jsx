@@ -25,6 +25,7 @@ import RecommendedPost from "./pages/RecommendedPost";
 import HomeLearningPlan from "./pages/HomeLeraningPlan.jsx";
 import CreatePlanPage from "./pages/CreatePlanPage.jsx";
 import LearningPlanPage from "./pages/LearningPlanPage.jsx";
+import ChangePassword from "./pages/ChangePassword.jsx";
 
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
       <Route path="/sent-requests" element={<SentRequests />} />
       <Route path="/following" element={<FollowingPage />} />
       <Route path="/followers" element={<FollowersPage />} />
+      <Route path="/change-password" element={<ChangePassword />} />
       
 
         
