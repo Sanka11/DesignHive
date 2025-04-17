@@ -44,15 +44,23 @@ public class PostController {
 
     // Like a post
     @PostMapping("/{id}/like")
-    public ResponseEntity<?> likePost(@PathVariable String id) {
+    public ResponseEntity<?> likePost(@PathVariable String id, @RequestBody Map<String, String> body) {
         try {
-            long updatedLikes = postService.likePost(id);
+            String email = body.get("email");
+            String username = body.get("username");
+    
+            if (email == null || username == null) {
+                return ResponseEntity.badRequest().body("Missing liker info");
+            }
+    
+            long updatedLikes = postService.likePost(id, email, username);
             return ResponseEntity.ok(Map.of("likes", updatedLikes));
         } catch (Exception e) {
             logger.error("Error liking post", e);
             return ResponseEntity.status(500).body("Error liking post");
         }
     }
+    
 
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(@PathVariable String id, @RequestBody Map<String, String> body) {

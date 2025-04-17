@@ -35,6 +35,7 @@ const Post = ({ user = {}, post }) => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedCommentText, setEditedCommentText] = useState("");
   const [isAddingComment, setIsAddingComment] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   const allTags = [
     ...designDisciplines,
@@ -59,6 +60,11 @@ const Post = ({ user = {}, post }) => {
   };
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("loggedInUser");
+    setLoggedInUser(storedUser ? JSON.parse(storedUser) : null);
+  }, []);
+
+  useEffect(() => {
     if (id) fetchComments();
   }, [id]);
 
@@ -80,14 +86,29 @@ const Post = ({ user = {}, post }) => {
 
   const handleLike = async () => {
     try {
+      const email = post?.authorEmail; // make sure user is defined
+      const username = post?.authorUsername;
+
+      if (!email || !username) {
+        console.error("Missing email or username");
+        return;
+      }
+
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`,
+        {
+          email,
+          username,
+        }
       );
+
       setLikes(res.data.likes);
+
       const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
       const updatedLikes = isLiked
         ? likedPosts.filter((pid) => pid !== id)
         : [...likedPosts, id];
+
       localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
       setIsLiked(!isLiked);
     } catch (err) {
@@ -99,22 +120,23 @@ const Post = ({ user = {}, post }) => {
     if (!newComment.trim()) return;
     try {
       setIsAddingComment(true);
-      const storedUser = localStorage.getItem("loggedInUser");
-      const user = storedUser ? JSON.parse(storedUser) : null;
-      if (!user || !user.username) return;
 
-      const res = await axios.post(
+      if (!loggedInUser?.username) {
+        console.error("⚠️ User not found in localStorage");
+        return;
+      }
+
+      await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`,
         {
           text: newComment,
-          email: user.email,
-          username: user.username,
+          email: loggedInUser.email,
+          username: loggedInUser.username,
         }
       );
 
-      const addedComment = res.data;
-      setComments((prev) => [addedComment, ...prev]);
       setNewComment("");
+      fetchComments(); // ✅ refresh comments from backend
     } catch (err) {
       console.error("❌ Error adding comment:", err);
     } finally {
@@ -148,6 +170,34 @@ const Post = ({ user = {}, post }) => {
       fetchComments();
     } catch (err) {
       console.error("Error deleting comment", err);
+    }
+  };
+
+  const getTimeDisplay = () => {
+    try {
+      let date;
+
+      if (createdAt?.toDate) {
+        date = createdAt.toDate(); // Firebase Timestamp
+      } else if (createdAt?.seconds) {
+        date = new Date(createdAt.seconds * 1000); // Firestore timestamp format
+      } else if (
+        typeof createdAt === "string" ||
+        typeof createdAt === "number"
+      ) {
+        date = new Date(createdAt); // ISO string or number
+      } else {
+        return "Just now";
+      }
+
+      if (isNaN(date.getTime())) {
+        return "Just now"; // Invalid Date
+      }
+
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (err) {
+      console.error("Time formatting error:", err);
+      return "Just now";
     }
   };
 
@@ -265,97 +315,138 @@ const Post = ({ user = {}, post }) => {
         >
           💬 <span className="ml-2">Comment</span>
         </button>
-        <button className="w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md">
-          🔄 <span className="ml-2">Share</span>
-        </button>
       </div>
 
+      {/* Comments Section */}
+      {/* Comments Section */}
       {showComments && (
         <div className="p-4 bg-gray-50 border-t">
-          <div className="flex mb-4 gap-2">
-            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-sm">
-              {user?.username?.charAt(0) || user?.email?.charAt(0) || "U"}
-            </div>
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-              placeholder="Write a comment..."
-              className="flex-grow border rounded px-3 py-1 text-sm"
+          {/* Add Comment - Improved */}
+          <div className="flex mb-4 gap-2 items-center">
+            <img
+              src={loggedInUser?.avatar || DEFAULT_PROFILE_PIC}
+              onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+              alt="User Avatar"
+              className="w-8 h-8 rounded-full object-cover"
             />
-            <button
-              onClick={handleAddComment}
-              className="text-blue-600 text-sm font-semibold"
-            >
-              Post
-            </button>
+            <div className="flex-grow relative">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                placeholder="Write a comment..."
+                className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={isAddingComment || !newComment.trim()}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
+                  isAddingComment || !newComment.trim()
+                    ? "text-gray-400"
+                    : "text-blue-600 hover:text-blue-700"
+                } font-semibold text-sm`}
+              >
+                {isAddingComment ? "Posting..." : "Post"}
+              </button>
+            </div>
           </div>
 
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex mb-3">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs">
-                {comment.commentUser?.charAt(0) ||
-                  comment.commentEmail?.charAt(0) ||
-                  "U"}
+          {/* Comments List - Improved */}
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            {comments.length === 0 ? (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No comments yet. Be the first to comment!
               </div>
-              <div className="ml-2 w-full">
-                <div className="bg-white p-3 rounded-2xl border">
-                  <div className="font-semibold text-sm mb-1">
-                    {comment.commentUser ||
-                      comment.commentEmail?.split("@")[0] ||
-                      "User"}
+            ) : (
+              comments.map((comment) => {
+                const isOwner = loggedInUser?.email === comment.commentEmail;
+                return (
+                  <div key={comment.id} className="flex gap-3 group">
+                    <img
+                      src={comment.userAvatar || DEFAULT_PROFILE_PIC}
+                      onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+                      alt="Commenter Avatar"
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-semibold text-sm text-gray-800">
+                            {comment.commentUser || comment.commentEmail}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(
+                              new Date(
+                                comment.createdAt?.seconds
+                                  ? comment.createdAt.seconds * 1000
+                                  : comment.createdAt
+                              ),
+                              { addSuffix: true }
+                            )}
+                          </span>
+                        </div>
+
+                        {editingCommentId === comment.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              className="w-full border p-2 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              value={editedCommentText}
+                              onChange={(e) =>
+                                setEditedCommentText(e.target.value)
+                              }
+                              rows="3"
+                              autoFocus
+                            />
+                            <div className="flex gap-2 justify-end text-xs">
+                              <button
+                                className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+                                onClick={() => setEditingCommentId(null)}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                onClick={() => handleEditComment(comment.id)}
+                                disabled={!editedCommentText.trim()}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-800 whitespace-pre-line">
+                            {comment.text}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons - Only visible on hover or when owner */}
+                      {isOwner && (
+                        <div className="flex gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-gray-500">
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(comment.id);
+                              setEditedCommentText(comment.text);
+                            }}
+                            className="hover:text-blue-600"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="hover:text-red-600"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {editingCommentId === comment.id ? (
-                    <>
-                      <textarea
-                        value={editedCommentText}
-                        onChange={(e) => setEditedCommentText(e.target.value)}
-                        className="w-full mt-2 p-2 border rounded"
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={() => handleEditComment(comment.id)}
-                          className="text-green-600 text-sm"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingCommentId(null)}
-                          className="text-gray-600 text-sm"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm text-gray-700 mb-2">
-                        {comment.text}
-                      </p>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <button
-                          onClick={() => {
-                            setEditingCommentId(comment.id);
-                            setEditedCommentText(comment.text);
-                          }}
-                          className="hover:underline"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
