@@ -107,27 +107,28 @@ const Post = ({ user = {}, post }) => {
     if (!newComment.trim()) return;
     try {
       setIsAddingComment(true);
-
+  
       if (!loggedInUser?.username) {
         console.error("⚠️ User not found in localStorage");
         return;
       }
-
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`, {
+  
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`, {
         text: newComment,
         email: loggedInUser.email,
         username: loggedInUser.username,
       });
-
-      const addedComment = res.data;
-      setComments((prev) => [addedComment, ...prev]);
+  
       setNewComment("");
+      fetchComments(); // ✅ refresh comments from backend
     } catch (err) {
       console.error("❌ Error adding comment:", err);
     } finally {
       setIsAddingComment(false);
     }
   };
+  
+  
 
   const handleEditComment = async (commentId) => {
     try {
@@ -153,12 +154,29 @@ const Post = ({ user = {}, post }) => {
 
   const getTimeDisplay = () => {
     try {
-      const date = createdAt?.toDate?.() ?? new Date(createdAt?.seconds ? createdAt.seconds * 1000 : createdAt);
+      let date;
+  
+      if (createdAt?.toDate) {
+        date = createdAt.toDate(); // Firebase Timestamp
+      } else if (createdAt?.seconds) {
+        date = new Date(createdAt.seconds * 1000); // Firestore timestamp format
+      } else if (typeof createdAt === "string" || typeof createdAt === "number") {
+        date = new Date(createdAt); // ISO string or number
+      } else {
+        return "Just now";
+      }
+  
+      if (isNaN(date.getTime())) {
+        return "Just now"; // Invalid Date
+      }
+  
       return formatDistanceToNow(date, { addSuffix: true });
-    } catch {
+    } catch (err) {
+      console.error("Time formatting error:", err);
       return "Just now";
     }
   };
+  
 
   const getVideoMimeType = (url) => {
     const ext = url.split(".").pop().split("?")[0].toLowerCase();
