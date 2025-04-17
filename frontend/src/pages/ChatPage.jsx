@@ -7,7 +7,6 @@ import { GiHoneycomb } from "react-icons/gi";
 import { FaUserCircle } from "react-icons/fa";
 
 export default function ChatPage({ currentUser }) {
-  // Handle null currentUser
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -42,10 +41,10 @@ export default function ChatPage({ currentUser }) {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [showUserSelection, setShowUserSelection] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [showChatDeleteConfirm, setShowChatDeleteConfirm] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Convert Firestore timestamp to Date
   const firestoreTimestampToDate = (timestamp) => {
     if (!timestamp) return new Date();
     if (timestamp.seconds) {
@@ -54,7 +53,6 @@ export default function ChatPage({ currentUser }) {
     return new Date(timestamp);
   };
 
-  // Fetch messages for the current chat
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -67,7 +65,6 @@ export default function ChatPage({ currentUser }) {
           : [];
         setMessages(formattedMessages);
         
-        // Get other user's details
         const otherEmail = chatId.split("_").find(email => email !== currentUser.email);
         if (otherEmail) {
           setOtherUserEmail(otherEmail);
@@ -86,14 +83,12 @@ export default function ChatPage({ currentUser }) {
     if (chatId) {
       fetchMessages();
     } else {
-      // Reset chat-specific state when no chat is selected
       setMessages([]);
       setOtherUserEmail("");
       setOtherUserName("");
     }
   }, [chatId, currentUser.email]);
 
-  // Fetch all chats started by this user
   useEffect(() => {
     const fetchUserChats = async () => {
       try {
@@ -109,7 +104,6 @@ export default function ChatPage({ currentUser }) {
     }
   }, [currentUser]);
 
-  // Fetch available users (excluding current user and existing chats)
   useEffect(() => {
     const fetchAvailableUsers = async () => {
       try {
@@ -134,30 +128,24 @@ export default function ChatPage({ currentUser }) {
     }
   }, [showUserSelection, userChats, currentUser.email]);
 
-  // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Start a new chat with selected user
   const startNewChat = async (userEmail) => {
     try {
-      // Create a unique chat ID by combining emails in alphabetical order
       const chatIdentifier = [currentUser.email, userEmail].sort().join('_');
       
-      // Check if chat already exists
       const existingChat = userChats.find(chat => chat.chatId === chatIdentifier);
       
       if (existingChat) {
         navigate(`/chat/${chatIdentifier}`);
       } else {
-        // Create new chat
         await axios.post('/chats', {
           participants: [currentUser.email, userEmail],
           startedBy: currentUser.email
         });
         
-        // Navigate to the new chat
         navigate(`/chat/${chatIdentifier}`);
       }
       
@@ -168,7 +156,6 @@ export default function ChatPage({ currentUser }) {
     }
   };
 
-  // Send a message
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !chatId) return;
 
@@ -194,19 +181,16 @@ export default function ChatPage({ currentUser }) {
     }
   };
 
-  // Start editing a message
   const startEdit = (message) => {
     setIsEditing(message.messageId);
     setEditText(message.text);
   };
 
-  // Cancel editing
   const cancelEdit = () => {
     setIsEditing(null);
     setEditText("");
   };
 
-  // Save edited message
   const saveEdit = async () => {
     if (!editText.trim() || !chatId) return;
 
@@ -229,7 +213,6 @@ export default function ChatPage({ currentUser }) {
     }
   };
 
-  // Delete a message
   const handleDelete = async (messageId) => {
     if (!chatId) return;
     
@@ -249,14 +232,26 @@ export default function ChatPage({ currentUser }) {
     }
   };
 
-  // Format timestamp
+  const handleDeleteChat = async (chatIdToDelete) => {
+    try {
+      await axios.delete(`/chats/${chatIdToDelete}`);
+      setUserChats(userChats.filter(chat => chat.chatId !== chatIdToDelete));
+      setShowChatDeleteConfirm(null);
+      
+      if (chatId === chatIdToDelete) {
+        navigate('/chat');
+      }
+    } catch (err) {
+      console.error("Error deleting chat:", err);
+    }
+  };
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Format date header if needed
   const formatDateHeader = (timestamp, index) => {
     if (!timestamp || index === 0) return null;
     
@@ -277,14 +272,12 @@ export default function ChatPage({ currentUser }) {
     return null;
   };
 
-  // Filter chats based on search term
   const filteredChats = userChats.filter(chat => {
     if (!chat?.chatId) return false;
     const other = chat.chatId.split("_").find(email => email !== currentUser.email);
     return other.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // Filter available users based on search term
   const filteredAvailableUsers = availableUsers.filter(user => 
     user.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
     (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
@@ -292,7 +285,6 @@ export default function ChatPage({ currentUser }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-sm">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -336,13 +328,13 @@ export default function ChatPage({ currentUser }) {
             </div>
           ) : (
             <ul>
-              {filteredChats.map((chat, index) => {
+              {filteredChats.map((chat) => {
                 if (!chat?.chatId) return null;
                 const other = chat.chatId.split("_").find(email => email !== currentUser.email);
                 const isActive = chatId === chat.chatId;
 
                 return (
-                  <li key={chat.chatId}>
+                  <li key={chat.chatId} className="group relative">
                     <motion.button
                       whileHover={{ x: 5 }}
                       onClick={() => navigate(`/chat/${chat.chatId}`)}
@@ -353,13 +345,22 @@ export default function ChatPage({ currentUser }) {
                       }`}
                     >
                       <FaUserCircle className="text-gray-400 text-xl mr-3" />
-                      <div className="truncate">
+                      <div className="truncate flex-1">
                         <p className="font-medium text-gray-800 truncate">{other}</p>
                         <p className="text-xs text-gray-500 truncate">
                           {chat.lastMessage || "No messages yet"}
                         </p>
                       </div>
                     </motion.button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowChatDeleteConfirm(chat.chatId);
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1"
+                    >
+                      <FiTrash2 size={16} />
+                    </button>
                   </li>
                 );
               })}
@@ -368,11 +369,9 @@ export default function ChatPage({ currentUser }) {
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {chatId ? (
           <>
-            {/* Chat Header */}
             <div className="bg-white p-4 border-b border-gray-200 shadow-sm">
               <div className="max-w-6xl mx-auto flex items-center justify-between">
                 <div className="flex items-center">
@@ -394,7 +393,6 @@ export default function ChatPage({ currentUser }) {
               </div>
             </div>
 
-            {/* Messages Container */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -405,7 +403,6 @@ export default function ChatPage({ currentUser }) {
                 <div className="max-w-4xl mx-auto space-y-4">
                   {messages.map((msg, index) => (
                     <div key={msg.messageId} className="relative">
-                      {/* Date header if needed */}
                       {formatDateHeader(msg.timestamp, index)}
                       
                       {isEditing === msg.messageId ? (
@@ -442,7 +439,7 @@ export default function ChatPage({ currentUser }) {
                           }`}
                         >
                           <div
-                            className={`max-w-2xl rounded-xl p-4 ${
+                            className={`max-w-xl rounded-xl p-4 ${
                               msg.sender === currentUser.email
                                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-br-none shadow-md'
                                 : 'bg-white border border-gray-200 rounded-bl-none shadow-sm'
@@ -496,7 +493,6 @@ export default function ChatPage({ currentUser }) {
               )}
             </div>
 
-            {/* Message Input */}
             <div className="p-4 bg-white border-t border-gray-200 shadow-sm">
               <div className="max-w-4xl mx-auto flex items-center gap-2">
                 <input
@@ -564,19 +560,12 @@ export default function ChatPage({ currentUser }) {
                 >
                   <FiHome className="mr-2" /> Back to Home
                 </Link>
-                {/* <button
-                  onClick={() => setShowUserSelection(true)}
-                  className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                >
-                  <FiPlus className="mr-2" /> New Chat
-                </button> */}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* User Selection Modal */}
       <AnimatePresence>
         {showUserSelection && (
           <motion.div 
@@ -644,7 +633,6 @@ export default function ChatPage({ currentUser }) {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div 
@@ -681,6 +669,49 @@ export default function ChatPage({ currentUser }) {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center"
                 >
                   <FiTrash2 className="mr-2" /> Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showChatDeleteConfirm && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">Delete Chat</h3>
+                <button
+                  onClick={() => setShowChatDeleteConfirm(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              <p className="text-gray-600 mb-6">Are you sure you want to delete this chat? All messages will be permanently removed.</p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowChatDeleteConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteChat(showChatDeleteConfirm)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center"
+                >
+                  <FiTrash2 className="mr-2" /> Delete Chat
                 </button>
               </div>
             </motion.div>

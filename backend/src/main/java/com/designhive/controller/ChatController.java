@@ -5,6 +5,7 @@ import com.designhive.entity.MessageRequest;
 import com.designhive.service.ChatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -88,6 +89,17 @@ public class ChatController {
             throws ExecutionException, InterruptedException {
         String username = chatService.getDisplayNameByEmail(email);
         return ResponseEntity.ok(Map.of("username", username));
+    }
+
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<?> deleteChat(@PathVariable String chatId) {
+        try {
+            chatService.deleteChat(chatId);
+            return ResponseEntity.ok("Chat deleted");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting chat: " + e.getMessage());
+        }
     }
 
 }
