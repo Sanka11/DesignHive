@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../auth/useAuth";
 import Post from "./Post";
-import { TailSpin } from "react-loader-spinner";
-import { GiBee } from "react-icons/gi";
+import { FiLoader } from "react-icons/fi";
+import { GiBee, GiHoneycomb } from "react-icons/gi";
 
 const RecommendedPost = () => {
   const { user } = useAuth();
@@ -18,7 +18,9 @@ const RecommendedPost = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/posts/recommended?userId=${user?.id}`
+        `${import.meta.env.VITE_API_BASE_URL}/posts/recommended?userId=${
+          user?.id
+        }`
       );
 
       const transformed = response.data
@@ -99,11 +101,15 @@ const RecommendedPost = () => {
   }, [searchTerm, selectedPreference, recommendedPosts]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-amber-50 bg-opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBvcGFjaXR5PSIwLjEiPjxkZWZzPjxwYXR0ZXJuIGlkPSJkaWFnb25hbF9oYXRjaCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjMDAwIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2RpYWdvbmFsX2hhdGNoKSIvPjwvc3ZnPg==')] py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <h2 className="text-2xl font-bold mb-6 text-center text-amber-600">
-          🐝 Recommended Posts for You
-        </h2>
+        <div className="flex items-center justify-center my-6 gap-2">
+          <GiHoneycomb className="text-3xl text-amber-500" />
+          <h2 className="text-3xl font-bold text-amber-900 font-serif">
+            Recommended Posts
+          </h2>
+          <GiBee className="text-3xl text-amber-500" />
+        </div>
 
         {/* 🔍 Search & Sort */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -141,8 +147,11 @@ const RecommendedPost = () => {
 
         {/* Posts */}
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <TailSpin height="40" width="40" color="#f59e0b" />
+          <div className="flex flex-col items-center justify-center py-12 bg-amber-100 rounded-xl shadow-lg border border-amber-200">
+            <FiLoader className="animate-spin text-3xl text-amber-600 mb-4" />
+            <p className="text-amber-800">
+              Gathering honey... (loading recommended posts)
+            </p>
           </div>
         ) : filteredPosts.length > 0 ? (
           <div className="space-y-6">

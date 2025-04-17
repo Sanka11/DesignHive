@@ -1,12 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaBell, FaBars, FaTimes, FaThumbsUp, FaSignOutAlt, FaUser, FaQuestionCircle, FaUserFriends } from "react-icons/fa";
+import {
+  FaBell,
+  FaBars,
+  FaTimes,
+  FaThumbsUp,
+  FaSignOutAlt,
+  FaUser,
+  FaQuestionCircle,
+  FaUserFriends,
+} from "react-icons/fa";
 import { RiDashboardLine } from "react-icons/ri";
 import { GiBee } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth/useAuth";
 import DesignHiveLogo from "../assets/DesignHiveLogo.png";
-import defaultProfilePic from "../assets/default-profile.png"; 
+import defaultProfilePic from "../assets/default-profile.png";
 import { MdAdd } from "react-icons/md";
 import axios from "../api/axios";
 import { FaCheck, FaTimes as FaTimesIcon } from "react-icons/fa";
@@ -15,7 +24,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -24,11 +33,12 @@ const Navbar = () => {
   const [usersMap, setUsersMap] = useState({});
   const [cancelingRequest, setCancelingRequest] = useState(null);
   const [acceptingRequest, setAcceptingRequest] = useState(null);
-  
+
   const profileRef = useRef(null);
   const notificationsRef = useRef(null);
 
-  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
+  const hideNavbar =
+    location.pathname === "/login" || location.pathname === "/register";
   if (hideNavbar) return null;
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
@@ -38,10 +48,10 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login?logout_success=true', { replace: true });
+      navigate("/login?logout_success=true", { replace: true });
     } catch (error) {
-      console.error('Logout error:', error);
-      navigate('/login');
+      console.error("Logout error:", error);
+      navigate("/login");
     }
   };
 
@@ -65,7 +75,7 @@ const Navbar = () => {
   const getPendingRequests = async (email) => {
     try {
       const response = await axios.get("/follow/pending", {
-        params: { receiverEmail: email }
+        params: { receiverEmail: email },
       });
       setPendingRequests(response.data);
     } catch (error) {
@@ -78,10 +88,10 @@ const Navbar = () => {
     try {
       setAcceptingRequest(id);
       await axios.post("/follow/accept", null, {
-        params: { requestId: id }
+        params: { requestId: id },
       });
       // Remove the accepted request from the state
-      setPendingRequests(prev => prev.filter(req => req.id !== id));
+      setPendingRequests((prev) => prev.filter((req) => req.id !== id));
     } catch (error) {
       console.error("Error accepting request:", error);
     } finally {
@@ -94,13 +104,15 @@ const Navbar = () => {
     try {
       setCancelingRequest(senderEmail);
       await axios.post("/follow/cancel", null, {
-        params: { 
-          senderEmail, 
-          receiverEmail: user.email 
-        }
+        params: {
+          senderEmail,
+          receiverEmail: user.email,
+        },
       });
       // Remove the canceled request from the state
-      setPendingRequests(prev => prev.filter(req => req.senderEmail !== senderEmail));
+      setPendingRequests((prev) =>
+        prev.filter((req) => req.senderEmail !== senderEmail)
+      );
     } catch (err) {
       console.error("Error canceling request:", err);
     } finally {
@@ -119,7 +131,10 @@ const Navbar = () => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
         setNotificationsOpen(false);
       }
     };
@@ -139,11 +154,13 @@ const Navbar = () => {
   const profilePic = user.profileImagePath
     ? user.profileImagePath.startsWith("http")
       ? user.profileImagePath
-      : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${user.profileImagePath}`
+      : `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${
+          user.profileImagePath
+        }`
     : defaultProfilePic;
 
-  const firstName = user.username?.split(' ')[0] || 'User';
-  const userEmail = user.email || '';
+  const firstName = user.username?.split(" ")[0] || "User";
+  const userEmail = user.email || "";
 
   const handleImgError = (e) => {
     e.target.onerror = null;
@@ -156,12 +173,20 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={`bg-amber-50 text-gray-900 fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? "shadow-lg py-1" : "shadow-md py-2"}`}>
+    <nav
+      className={`bg-amber-50 text-gray-900 fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrolled ? "shadow-lg py-1" : "shadow-md py-2"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <Link to="/feed" className="flex items-center">
-              <img src={DesignHiveLogo} alt="DesignHive" className="h-10 w-auto" />
+              <img
+                src={DesignHiveLogo}
+                alt="DesignHive"
+                className="h-10 w-auto"
+              />
             </Link>
           </div>
 
@@ -169,15 +194,37 @@ const Navbar = () => {
           <div className="hidden md:flex items-center mx-4 flex-1 max-w-2xl"></div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <NavLink to="/feed" icon={<RiDashboardLine />} isActive={isActive("/feed")}>Feed</NavLink>
-            <NavLink to="/recommended" icon={<FaThumbsUp />} isActive={isActive("/recommended")}>Recommended</NavLink>
-            <NavLink to="/explore-plans" isActive={isActive("/explore-plans")}>Explore Plans</NavLink>
-            <NavLink to="/learning-planhome" isActive={isActive("/learning-planhome")}>Create Plans</NavLink>     
-            <NavLink to="/manageposts" isActive={isActive("/manageposts")}>Manage Posts</NavLink>
+            <NavLink
+              to="/feed"
+              icon={<RiDashboardLine />}
+              isActive={isActive("/feed")}
+            >
+              Feed
+            </NavLink>
+            <NavLink
+              to="/recommended"
+              icon={<FaThumbsUp />}
+              isActive={isActive("/recommended")}
+            >
+              Recommended
+            </NavLink>
+            <NavLink to="/newpost" isActive={isActive("/newpost")}>
+              New Post
+            </NavLink>
+
+            <NavLink
+              to="/learning-planhome"
+              isActive={isActive("/learning-planhome")}
+            >
+              Create Plans
+            </NavLink>
+            <NavLink to="/manageposts" isActive={isActive("/manageposts")}>
+              Manage Posts
+            </NavLink>
 
             <div className="relative" ref={notificationsRef}>
-              <button 
-                onClick={toggleNotifications} 
+              <button
+                onClick={toggleNotifications}
                 className="p-2 relative rounded-full hover:bg-amber-100 transition"
                 aria-label="Notifications"
               >
@@ -206,13 +253,13 @@ const Navbar = () => {
                         {pendingRequests.length} pending
                       </span>
                     </div>
-                    
+
                     <div className="max-h-96 overflow-y-auto">
                       {pendingRequests.length > 0 ? (
                         <ul className="divide-y divide-amber-100">
                           {pendingRequests.map((req) => (
-                            <motion.li 
-                              key={req.id} 
+                            <motion.li
+                              key={req.id}
                               className="py-3 px-4 hover:bg-amber-50 transition"
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -226,7 +273,8 @@ const Navbar = () => {
                                   </div>
                                   <div>
                                     <p className="text-sm font-medium text-gray-900">
-                                      {usersMap[req.senderEmail] || req.senderEmail}
+                                      {usersMap[req.senderEmail] ||
+                                        req.senderEmail}
                                     </p>
                                     <p className="text-xs text-gray-500 truncate max-w-[180px]">
                                       {req.senderEmail}
@@ -254,7 +302,9 @@ const Navbar = () => {
                                       e.stopPropagation();
                                       handleCancelRequest(req.senderEmail);
                                     }}
-                                    disabled={cancelingRequest === req.senderEmail}
+                                    disabled={
+                                      cancelingRequest === req.senderEmail
+                                    }
                                     className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center h-6 w-6"
                                     title="Decline"
                                   >
@@ -276,10 +326,10 @@ const Navbar = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="border-t border-amber-100 bg-amber-50 px-4 py-2 text-center">
-                      <Link 
-                        to="/profile" 
+                      <Link
+                        to="/profile"
                         className="text-sm text-amber-600 hover:text-amber-800"
                         onClick={() => setNotificationsOpen(false)}
                       >
@@ -292,13 +342,25 @@ const Navbar = () => {
             </div>
 
             <div className="relative" ref={profileRef}>
-              <button onClick={toggleProfile} className="flex items-center space-x-2 p-1 rounded-full hover:bg-amber-100 transition" aria-label="Profile menu">
+              <button
+                onClick={toggleProfile}
+                className="flex items-center space-x-2 p-1 rounded-full hover:bg-amber-100 transition"
+                aria-label="Profile menu"
+              >
                 {profilePic ? (
-                  <img src={profilePic} onError={handleImgError} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-amber-300" referrerPolicy="no-referrer" />
+                  <img
+                    src={profilePic}
+                    onError={handleImgError}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover border border-amber-300"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
                   <GiBee className="text-amber-800 text-2xl" />
                 )}
-                <span className="text-sm font-medium hidden lg:inline">{firstName}</span>
+                <span className="text-sm font-medium hidden lg:inline">
+                  {firstName}
+                </span>
               </button>
 
               <AnimatePresence>
@@ -313,21 +375,44 @@ const Navbar = () => {
                     <div className="px-4 py-3 border-b border-amber-100 bg-amber-100">
                       <div className="flex items-center space-x-3">
                         {profilePic ? (
-                          <img src={profilePic} onError={handleImgError} alt="Profile" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                          <img
+                            src={profilePic}
+                            onError={handleImgError}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
                         ) : (
                           <GiBee className="text-amber-800 text-2xl" />
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{user.username || 'User'}</p>
-                          <p className="text-xs text-amber-800/70 break-all">{userEmail}</p>
+                          <p className="font-medium text-sm truncate">
+                            {user.username || "User"}
+                          </p>
+                          <p className="text-xs text-amber-800/70 break-all">
+                            {userEmail}
+                          </p>
                         </div>
                       </div>
                     </div>
-                    <DropdownLink to="/profile" icon={<FaUser className="text-amber-700" />}>My Profile</DropdownLink>
-                    <DropdownLink to="/newpost" icon={<MdAdd className="text-amber-700" />}>New Post</DropdownLink>
-                    <DropdownLink to="/help" icon={<FaQuestionCircle className="text-amber-700" />}>Help Center</DropdownLink>
+                    <DropdownLink
+                      to="/profile"
+                      icon={<FaUser className="text-amber-700" />}
+                    >
+                      My Profile
+                    </DropdownLink>
+
+                    <DropdownLink
+                      to="/help"
+                      icon={<FaQuestionCircle className="text-amber-700" />}
+                    >
+                      Help Center
+                    </DropdownLink>
                     <div className="border-t border-amber-100">
-                      <button onClick={handleLogout} className="w-full text-left px-4 py-3 hover:bg-amber-100 transition flex items-center space-x-2 text-red-600">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-3 hover:bg-amber-100 transition flex items-center space-x-2 text-red-600"
+                      >
                         <FaSignOutAlt className="text-amber-700" />
                         <span>Sign Out</span>
                       </button>
@@ -339,8 +424,8 @@ const Navbar = () => {
           </div>
 
           <div className="md:hidden flex items-center space-x-3">
-            <button 
-              onClick={toggleNotifications} 
+            <button
+              onClick={toggleNotifications}
               className="p-2 relative rounded-full hover:bg-amber-100 transition"
               aria-label="Notifications"
             >
@@ -351,9 +436,17 @@ const Navbar = () => {
                 </span>
               )}
             </button>
-            
-            <button onClick={toggleMenu} className="p-2 rounded-full hover:bg-amber-100 transition" aria-label="Menu">
-              {menuOpen ? <FaTimes className="text-xl text-amber-800" /> : <FaBars className="text-xl text-amber-800" />}
+
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-full hover:bg-amber-100 transition"
+              aria-label="Menu"
+            >
+              {menuOpen ? (
+                <FaTimes className="text-xl text-amber-800" />
+              ) : (
+                <FaBars className="text-xl text-amber-800" />
+              )}
             </button>
           </div>
         </div>
@@ -363,7 +456,7 @@ const Navbar = () => {
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
             className="md:hidden bg-amber-50 border-t border-amber-200 overflow-hidden"
@@ -371,16 +464,26 @@ const Navbar = () => {
             <div className="px-4 pt-3 pb-6 space-y-3">
               <div className="flex items-center space-x-3 px-4 py-3 border-b border-amber-100">
                 {profilePic ? (
-                  <img src={profilePic} onError={handleImgError} alt="Profile" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  <img
+                    src={profilePic}
+                    onError={handleImgError}
+                    alt="Profile"
+                    className="w-12 h-12 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
                   <GiBee className="text-amber-800 text-3xl" />
                 )}
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{user.username || 'User'}</p>
-                  <p className="text-xs text-amber-800/70 break-all">{userEmail}</p>
+                  <p className="font-medium truncate">
+                    {user.username || "User"}
+                  </p>
+                  <p className="text-xs text-amber-800/70 break-all">
+                    {userEmail}
+                  </p>
                 </div>
               </div>
-              
+
               {pendingRequests.length > 0 && (
                 <div className="bg-amber-100 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
@@ -393,11 +496,15 @@ const Navbar = () => {
                   </div>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {pendingRequests.slice(0, 3).map((req) => (
-                      <div key={req.id} className="flex justify-between items-center bg-white p-2 rounded">
+                      <div
+                        key={req.id}
+                        className="flex justify-between items-center bg-white p-2 rounded"
+                      >
                         <div className="flex items-center gap-2">
                           <GiBee className="text-amber-600" />
                           <span className="text-sm truncate max-w-[120px]">
-                            {usersMap[req.senderEmail] || req.senderEmail.split('@')[0]}
+                            {usersMap[req.senderEmail] ||
+                              req.senderEmail.split("@")[0]}
                           </span>
                         </div>
                         <div className="flex gap-1">
@@ -406,22 +513,24 @@ const Navbar = () => {
                             disabled={acceptingRequest === req.id}
                             className="p-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs"
                           >
-                            {acceptingRequest === req.id ? '...' : 'Accept'}
+                            {acceptingRequest === req.id ? "..." : "Accept"}
                           </button>
                           <button
                             onClick={() => handleCancelRequest(req.senderEmail)}
                             disabled={cancelingRequest === req.senderEmail}
                             className="p-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs"
                           >
-                            {cancelingRequest === req.senderEmail ? '...' : 'Decline'}
+                            {cancelingRequest === req.senderEmail
+                              ? "..."
+                              : "Decline"}
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
                   {pendingRequests.length > 3 && (
-                    <Link 
-                      to="/profile" 
+                    <Link
+                      to="/profile"
                       className="text-xs text-amber-700 mt-2 inline-block"
                       onClick={closeMobileMenu}
                     >
@@ -430,16 +539,68 @@ const Navbar = () => {
                   )}
                 </div>
               )}
-              
-              <MobileNavLink to="/feed" icon={<RiDashboardLine />} isActive={isActive("/feed")} onClick={closeMobileMenu}>Feed</MobileNavLink>
-              <MobileNavLink to="/recommended" icon={<FaThumbsUp />} isActive={isActive("/recommended")} onClick={closeMobileMenu}>Recommended</MobileNavLink>
-              <MobileNavLink to="/manageposts" isActive={isActive("/manageposts")} onClick={closeMobileMenu}>Manage Posts</MobileNavLink>
-              <MobileNavLink to="/explore-plans" isActive={isActive("/explore-plans")} onClick={closeMobileMenu}>Explore Plans</MobileNavLink>
-              <MobileNavLink to="/learning-planhome" isActive={isActive("/learning-planhome")} onClick={closeMobileMenu}>Create Plans</MobileNavLink>
+
+              <MobileNavLink
+                to="/feed"
+                icon={<RiDashboardLine />}
+                isActive={isActive("/feed")}
+                onClick={closeMobileMenu}
+              >
+                Feed
+              </MobileNavLink>
+              <MobileNavLink
+                to="/recommended"
+                icon={<FaThumbsUp />}
+                isActive={isActive("/recommended")}
+                onClick={closeMobileMenu}
+              >
+                Recommended
+              </MobileNavLink>
+              <MobileNavLink
+                to="/newpost"
+                isActive={isActive("/newpost")}
+                onClick={closeMobileMenu}
+              >
+                Manage Posts
+              </MobileNavLink>
+              <MobileNavLink
+                to="/explore-plans"
+                isActive={isActive("/explore-plans")}
+                onClick={closeMobileMenu}
+              >
+                New Post
+              </MobileNavLink>
+              <MobileNavLink
+                to="/learning-planhome"
+                isActive={isActive("/learning-planhome")}
+                onClick={closeMobileMenu}
+              >
+                Create Plans
+              </MobileNavLink>
               <div className="pt-2 border-t border-amber-200">
-                <MobileNavLink to="/profile" icon={<FaUser />} isActive={isActive("/profile")} onClick={closeMobileMenu}>Profile</MobileNavLink>
-                <MobileNavLink to="/help" icon={<FaQuestionCircle />} isActive={isActive("/help")} onClick={closeMobileMenu}>Help Center</MobileNavLink>
-                <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="w-full text-left py-3 px-4 text-red-500 hover:bg-red-50 rounded-lg transition flex items-center space-x-3">
+                <MobileNavLink
+                  to="/profile"
+                  icon={<FaUser />}
+                  isActive={isActive("/profile")}
+                  onClick={closeMobileMenu}
+                >
+                  Profile
+                </MobileNavLink>
+                <MobileNavLink
+                  to="/help"
+                  icon={<FaQuestionCircle />}
+                  isActive={isActive("/help")}
+                  onClick={closeMobileMenu}
+                >
+                  Help Center
+                </MobileNavLink>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    closeMobileMenu();
+                  }}
+                  className="w-full text-left py-3 px-4 text-red-500 hover:bg-red-50 rounded-lg transition flex items-center space-x-3"
+                >
                   <FaSignOutAlt />
                   <span>Logout</span>
                 </button>
@@ -453,11 +614,11 @@ const Navbar = () => {
 };
 
 const NavLink = ({ to, children, icon, isActive }) => (
-  <Link 
-    to={to} 
+  <Link
+    to={to}
     className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition font-medium ${
-      isActive 
-        ? "bg-amber-200 text-amber-900" 
+      isActive
+        ? "bg-amber-200 text-amber-900"
         : "text-amber-800 hover:bg-amber-100 hover:text-amber-900"
     }`}
   >
@@ -467,12 +628,12 @@ const NavLink = ({ to, children, icon, isActive }) => (
 );
 
 const MobileNavLink = ({ to, children, icon, isActive, onClick }) => (
-  <Link 
-    to={to} 
+  <Link
+    to={to}
     onClick={onClick}
     className={`flex items-center space-x-3 py-3 px-4 rounded-lg transition font-medium ${
-      isActive 
-        ? "bg-amber-200 text-amber-900" 
+      isActive
+        ? "bg-amber-200 text-amber-900"
         : "text-amber-800 hover:bg-amber-100"
     }`}
   >
@@ -482,7 +643,10 @@ const MobileNavLink = ({ to, children, icon, isActive, onClick }) => (
 );
 
 const DropdownLink = ({ to, children, icon }) => (
-  <Link to={to} className="block px-4 py-3 hover:bg-amber-100 transition flex items-center space-x-2 text-amber-800">
+  <Link
+    to={to}
+    className="block px-4 py-3 hover:bg-amber-100 transition flex items-center space-x-2 text-amber-800"
+  >
     {icon}
     <span>{children}</span>
   </Link>

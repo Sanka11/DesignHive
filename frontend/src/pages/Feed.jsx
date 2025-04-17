@@ -60,16 +60,16 @@ const Feed = () => {
 
   const getProfilePic = (userData) => {
     if (userData?.profileImagePath) {
-      return `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${userData.profileImagePath}`;
+      return `${import.meta.env.VITE_API_BASE_URL.replace("/api", "")}${
+        userData.profileImagePath
+      }`;
     }
     return defaultProfilePic;
   };
 
-
   const handleNewComment = ({ comment, postId }) => {
     console.log(`📝 New comment on post ${postId}:`, comment);
   };
-
 
   useEffect(() => {
     fetchPosts();
@@ -101,7 +101,9 @@ const Feed = () => {
             <div className="max-w-2xl mx-auto px-4">
               <div className="flex items-center justify-center my-6 gap-2">
                 <GiHoneycomb className="text-3xl text-amber-500" />
-                <h2 className="text-3xl font-bold text-amber-900 font-serif">Hive Feed</h2>
+                <h2 className="text-3xl font-bold text-amber-900 font-serif">
+                  Hive Feed
+                </h2>
                 <GiBee className="text-3xl text-amber-500" />
               </div>
 
@@ -124,26 +126,22 @@ const Feed = () => {
                 {isLoadingPosts ? (
                   <div className="flex flex-col items-center justify-center py-12 bg-amber-100 rounded-xl shadow-lg border border-amber-200">
                     <FiLoader className="animate-spin text-3xl text-amber-600 mb-4" />
-                    <p className="text-amber-800">Gathering honey... (loading posts)</p>
+                    <p className="text-amber-800">
+                      Gathering honey... (loading posts)
+                    </p>
                   </div>
                 ) : posts.length > 0 ? (
-
-                  posts.map((post) => (
-                    <Post
-                      key={post.id}
-                      post={post}
-                      onCommentAdded={({ comment }) =>
-                        handleNewComment({ comment, postId: post.id })
-                      }
-                    />
-                  ))
-
                   <div className="space-y-4">
                     {posts.map((post) => (
-                      <Post key={post.id} post={post} />
+                      <Post
+                        key={post.id}
+                        post={post}
+                        onCommentAdded={({ comment }) =>
+                          handleNewComment({ comment, postId: post.id })
+                        }
+                      />
                     ))}
                   </div>
-
                 ) : (
                   <div className="bg-amber-100 p-6 rounded-xl shadow-lg text-center border border-amber-200">
                     <GiHoneycomb className="mx-auto text-4xl text-amber-500 mb-3" />

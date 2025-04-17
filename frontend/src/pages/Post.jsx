@@ -22,6 +22,7 @@ const Post = ({ user = {}, post }) => {
     competitionInvolvement = [],
     skillLevel,
     createdAt,
+    updatedAt,
     user: postUser,
     likes: initialLikes = 0,
   } = post;
@@ -44,6 +45,19 @@ const Post = ({ user = {}, post }) => {
     ...(skillLevel ? [skillLevel] : []),
   ];
 
+  const isUpdated = updatedAt && updatedAt !== createdAt;
+
+  const getFormattedDate = (dateRef) => {
+    try {
+      const date =
+        dateRef?.toDate?.() ??
+        new Date(dateRef?.seconds ? dateRef.seconds * 1000 : dateRef);
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return "Just now";
+    }
+  };
+
   useEffect(() => {
     if (id) fetchComments();
   }, [id]);
@@ -55,7 +69,9 @@ const Post = ({ user = {}, post }) => {
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`
+      );
       setComments(res.data);
     } catch (err) {
       console.error("Error loading comments", err);
@@ -64,7 +80,9 @@ const Post = ({ user = {}, post }) => {
 
   const handleLike = async () => {
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`);
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`
+      );
       setLikes(res.data.likes);
       const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
       const updatedLikes = isLiked
@@ -81,29 +99,22 @@ const Post = ({ user = {}, post }) => {
     if (!newComment.trim()) return;
     try {
       setIsAddingComment(true);
-
       const storedUser = localStorage.getItem("loggedInUser");
       const user = storedUser ? JSON.parse(storedUser) : null;
+      if (!user || !user.username) return;
 
-      if (!user || !user.username) {
-        console.error("⚠️ User not found in localStorage");
-        return;
-      }
-
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`, {
-        text: newComment,
-    email: user.email,       // ✅ Add this line!
-    username: user.username,
-      });
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments`,
+        {
+          text: newComment,
+          email: user.email,
+          username: user.username,
+        }
+      );
 
       const addedComment = res.data;
       setComments((prev) => [addedComment, ...prev]);
       setNewComment("");
-
-      // Notify Feed component
-      if (onCommentAdded) {
-        onCommentAdded({ comment: addedComment });
-      }
     } catch (err) {
       console.error("❌ Error adding comment:", err);
     } finally {
@@ -113,9 +124,14 @@ const Post = ({ user = {}, post }) => {
 
   const handleEditComment = async (commentId) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments/${commentId}`, {
-        text: editedCommentText,
-      });
+      await axios.put(
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/posts/${id}/comments/${commentId}`,
+        {
+          text: editedCommentText,
+        }
+      );
       setEditingCommentId(null);
       setEditedCommentText("");
       fetchComments();
@@ -126,30 +142,24 @@ const Post = ({ user = {}, post }) => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments/${commentId}`);
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/comments/${commentId}`
+      );
       fetchComments();
     } catch (err) {
       console.error("Error deleting comment", err);
     }
   };
 
-  const getTimeDisplay = () => {
-    try {
-      const date = createdAt?.toDate?.() ?? new Date(createdAt?.seconds ? createdAt.seconds * 1000 : createdAt);
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch {
-      return "Just now";
-    }
-  };
-
   const getVideoMimeType = (url) => {
     const ext = url.split(".").pop().split("?")[0].toLowerCase();
-    return { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg" }[ext] || "";
+    return (
+      { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg" }[ext] || ""
+    );
   };
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 max-w-2xl mx-auto">
-      {/* Header */}
       <div className="flex items-center p-4 border-b">
         <img
           src={postUser?.avatar || DEFAULT_PROFILE_PIC}
@@ -158,28 +168,44 @@ const Post = ({ user = {}, post }) => {
           className="w-10 h-10 rounded-full object-cover"
         />
         <div className="ml-3">
-          <p className="font-semibold text-gray-800">{authorUsername || authorEmail}</p>
-          <p className="text-xs text-gray-500">{getTimeDisplay()}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-gray-800">
+              {authorUsername || authorEmail}
+            </p>
+            {isUpdated && (
+              <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                🛠 Updated
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">
+            Posted {getFormattedDate(createdAt)}
+          </p>
+          {isUpdated && (
+            <p className="text-xs text-amber-500">
+              Edited {getFormattedDate(updatedAt)}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Content */}
       <div className="px-4 py-3">
         <p className="text-gray-800 whitespace-pre-line">{content}</p>
       </div>
 
-      {/* Tags */}
       {allTags.length > 0 && (
         <div className="px-4 flex flex-wrap gap-2 mb-4">
           {allTags.map((tag) => (
-            <span key={tag} className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full">
+            <span
+              key={tag}
+              className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full"
+            >
               #{tag}
             </span>
           ))}
         </div>
       )}
 
-      {/* Media */}
       {mediaUrls.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-4 mb-4">
           {mediaUrls.map((url) => {
@@ -188,11 +214,18 @@ const Post = ({ user = {}, post }) => {
             return (
               <div key={url} className="rounded-md overflow-hidden border">
                 {isVideo ? (
-                  <video controls className="w-full h-48 object-cover cursor-pointer">
+                  <video
+                    controls
+                    className="w-full h-48 object-cover cursor-pointer"
+                  >
                     <source src={url} type={mimeType} />
                   </video>
                 ) : (
-                  <img src={url} className="w-full h-48 object-cover" alt="Post Media" />
+                  <img
+                    src={url}
+                    className="w-full h-48 object-cover"
+                    alt="Post Media"
+                  />
                 )}
               </div>
             );
@@ -200,23 +233,36 @@ const Post = ({ user = {}, post }) => {
         </div>
       )}
 
-      {/* Reactions */}
       <div className="px-4 py-2 border-t border-b text-sm text-gray-500 flex justify-between">
         <div className="flex items-center">
-          <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-1">👍</span>
-          <span>{likes} {likes === 1 ? "Like" : "Likes"}</span>
+          <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-1">
+            👍
+          </span>
+          <span>
+            {likes} {likes === 1 ? "Like" : "Likes"}
+          </span>
         </div>
-        <div className="hover:underline cursor-pointer" onClick={() => setShowComments(!showComments)}>
+        <div
+          className="hover:underline cursor-pointer"
+          onClick={() => setShowComments(!showComments)}
+        >
           {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex justify-around text-gray-600 px-2 py-1 border-b">
-        <button onClick={handleLike} className={`w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md ${isLiked ? "text-blue-600 font-semibold" : ""}`}>
+        <button
+          onClick={handleLike}
+          className={`w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md ${
+            isLiked ? "text-blue-600 font-semibold" : ""
+          }`}
+        >
           👍 <span className="ml-2">Like</span>
         </button>
-        <button onClick={() => setShowComments(!showComments)} className="w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md">
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md"
+        >
           💬 <span className="ml-2">Comment</span>
         </button>
         <button className="w-full py-2 flex justify-center items-center hover:bg-gray-100 rounded-md">
@@ -224,7 +270,6 @@ const Post = ({ user = {}, post }) => {
         </button>
       </div>
 
-      {/* Comments Section */}
       {showComments && (
         <div className="p-4 bg-gray-50 border-t">
           <div className="flex mb-4 gap-2">
@@ -239,18 +284,27 @@ const Post = ({ user = {}, post }) => {
               placeholder="Write a comment..."
               className="flex-grow border rounded px-3 py-1 text-sm"
             />
-            <button onClick={handleAddComment} className="text-blue-600 text-sm font-semibold">Post</button>
+            <button
+              onClick={handleAddComment}
+              className="text-blue-600 text-sm font-semibold"
+            >
+              Post
+            </button>
           </div>
 
           {comments.map((comment) => (
             <div key={comment.id} className="flex mb-3">
               <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs">
-                {comment.commentUser?.charAt(0) || comment.commentEmail?.charAt(0) || 'U'}
+                {comment.commentUser?.charAt(0) ||
+                  comment.commentEmail?.charAt(0) ||
+                  "U"}
               </div>
               <div className="ml-2 w-full">
                 <div className="bg-white p-3 rounded-2xl border">
                   <div className="font-semibold text-sm mb-1">
-                    {comment.commentUser || comment.commentEmail?.split('@')[0] || "User"}
+                    {comment.commentUser ||
+                      comment.commentEmail?.split("@")[0] ||
+                      "User"}
                   </div>
                   {editingCommentId === comment.id ? (
                     <>
@@ -276,7 +330,9 @@ const Post = ({ user = {}, post }) => {
                     </>
                   ) : (
                     <>
-                      <p className="text-sm text-gray-700 mb-2">{comment.text}</p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        {comment.text}
+                      </p>
                       <div className="flex justify-between text-xs text-gray-500">
                         <button
                           onClick={() => {

@@ -27,7 +27,10 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
 
   const selectOptions = {
     designDisciplines: [
-      { value: "UI Design", icon: <RiPencilRulerLine className="inline mr-2" /> },
+      {
+        value: "UI Design",
+        icon: <RiPencilRulerLine className="inline mr-2" />,
+      },
       { value: "UX Design", icon: <FiLayers className="inline mr-2" /> },
       { value: "Interaction Design", icon: <FiTool className="inline mr-2" /> },
       { value: "Motion Design", icon: <Video className="inline mr-2" /> },
@@ -40,13 +43,7 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
       "User Research",
       "Usability Testing",
     ],
-    tools: [
-      "Figma",
-      "Adobe XD",
-      "Sketch",
-      "Blender",
-      "After Effects" 
-    ],
+    tools: ["Figma", "Adobe XD", "Sketch", "Blender", "After Effects"],
     learningGoals: [
       "Career Development",
       "Improving UI/UX Skills",
@@ -157,8 +154,8 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.match("image.*") || file.type.match("video.*")
+    const files = Array.from(e.dataTransfer.files).filter(
+      (file) => file.type.match("image.*") || file.type.match("video.*")
     );
 
     if (files.length > 0) {
@@ -178,12 +175,20 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
     }
 
     const validFiles = files.filter((file) => {
-      const validTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4", "video/webm", "video/ogg"];
+      const validTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+      ];
       if (!validTypes.includes(file.type)) {
         toast.error(`Unsupported file type: ${file.name}`);
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
         toast.error(`File too large (max 10MB): ${file.name}`);
         return false;
       }
@@ -220,14 +225,10 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
       return;
     }
 
-    const confirmed = window.confirm("Are you sure you want to update this post?");
-    if (!confirmed) return;
-
     try {
       setIsUpdating(true);
       const uploadedUrls = [];
 
-      // Upload new media files
       for (let file of newMediaFiles) {
         const fileRef = ref(
           storage,
@@ -250,7 +251,10 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
         skillLevel,
       };
 
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/posts/${post.id}`, updatedPost);
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${post.id}`,
+        updatedPost
+      );
       toast.success("✅ Post updated successfully!");
       onPostUpdated();
       onRequestClose();
@@ -262,7 +266,14 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
     }
   };
 
-  const Dropdown = ({ label, options, value, onChange, isMulti = false, icon }) => (
+  const Dropdown = ({
+    label,
+    options,
+    value,
+    onChange,
+    isMulti = false,
+    icon,
+  }) => (
     <div className="mb-3">
       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
         {icon && <span className="mr-2">{icon}</span>}
@@ -315,7 +326,9 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
           <GiBee className="text-amber-600 text-xl" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Edit Your Design Post</h2>
+          <h2 className="text-xl font-bold text-gray-800">
+            Edit Your Design Post
+          </h2>
           <p className="text-sm text-gray-500">
             Update your content, media, and design details
           </p>
@@ -399,7 +412,7 @@ const EditPostModal = ({ isOpen, onRequestClose, post, onPostUpdated }) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Media Attachments
         </label>
-        
+
         {/* Drag and Drop Area */}
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors ${

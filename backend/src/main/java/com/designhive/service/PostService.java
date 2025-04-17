@@ -220,7 +220,8 @@ public class PostService {
     }
 
     // ✅ Update post content/tags
-    public void updatePost(String postId, Map<String, Object> updates) throws ExecutionException, InterruptedException {
+     public void updatePost(String postId, Map<String, Object> updates) throws ExecutionException, InterruptedException {
+        updates.put("updatedAt", Timestamp.now());
         firestore.collection("posts").document(postId).update(updates).get();
     }
 
