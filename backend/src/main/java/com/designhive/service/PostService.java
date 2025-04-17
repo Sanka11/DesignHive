@@ -70,38 +70,98 @@ public class PostService {
     }
 
     // ✅ Add comment
-    public void addComment(String postId, String comment) throws ExecutionException, InterruptedException {
-        firestore.collection("posts").document(postId).collection("comments").add(Map.of(
-                "text", comment,
-                "createdAt", Timestamp.now())).get();
+    public void addComment(String postId, String commentEmail, String commentUser, String commentText)
+        throws ExecutionException, InterruptedException {
+
+    if (commentEmail == null || commentUser == null || commentText == null) {
+        throw new IllegalArgumentException("Required comment fields must not be null.");
     }
+
+    // 🔍 Look up user by email
+    CollectionReference usersRef = firestore.collection("users");
+    Query query = usersRef.whereEqualTo("email", commentEmail);
+    ApiFuture<QuerySnapshot> querySnapshot = query.get();
+    List<QueryDocumentSnapshot> documents = querySnapshot.get().getDocuments();
+
+    if (documents.isEmpty()) {
+        throw new IllegalArgumentException("User with email " + commentEmail + " not found.");
+    }
+
+    DocumentReference commentRef = firestore.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .document();
+
+    String commentId = commentRef.getId();
+
+    Map<String, Object> commentData = new HashMap<>();
+    commentData.put("commentId", commentId);
+    commentData.put("commentEmail", commentEmail);
+    commentData.put("commentUser", commentUser);
+    commentData.put("text", commentText);
+    commentData.put("createdAt", Timestamp.now());
+
+    commentRef.set(commentData).get(); // Throws ExecutionException/InterruptedException
+}
+
 
     // ✅ Get comments
     public List<Map<String, Object>> getComments(String postId) throws ExecutionException, InterruptedException {
         List<QueryDocumentSnapshot> docs = firestore.collection("posts")
                 .document(postId).collection("comments")
                 .orderBy("createdAt").get().get().getDocuments();
+    
+        Set<String> commentEmails = docs.stream()
+                .map(doc -> (String) doc.get("commentEmail"))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    
+        Map<String, DocumentSnapshot> userDocs = new HashMap<>();
+        for (String email : commentEmails) {
+            List<QueryDocumentSnapshot> users = firestore.collection("users")
+                    .whereEqualTo("email", email).limit(1).get().get().getDocuments();
+            if (!users.isEmpty()) {
+                userDocs.put(email, users.get(0));
+            }
+        }
+    
         return docs.stream().map(doc -> {
             Map<String, Object> data = doc.getData();
             data.put("id", doc.getId());
+            String email = (String) data.get("commentEmail");
+            if (userDocs.containsKey(email)) {
+                DocumentSnapshot userDoc = userDocs.get(email);
+                data.put("avatar", userDoc.getString("profileImagePath"));
+            }
             return data;
         }).collect(Collectors.toList());
     }
 
     // ✅ Edit comment
     public void editComment(String postId, String commentId, String updatedText)
-            throws ExecutionException, InterruptedException {
-        firestore.collection("posts").document(postId)
-                .collection("comments").document(commentId)
-                .update(Map.of("text", updatedText, "editedAt", Timestamp.now())).get();
+        throws ExecutionException, InterruptedException {
+        DocumentReference commentRef = firestore.collection("posts")
+                .document(postId)
+                .collection("comments")
+                .document(commentId);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("text", updatedText);
+        updates.put("editedAt", Timestamp.now());
+
+        commentRef.update(updates).get();
     }
 
     // ✅ Delete comment
     public void deleteComment(String postId, String commentId) throws ExecutionException, InterruptedException {
-        firestore.collection("posts").document(postId)
-                .collection("comments").document(commentId).delete().get();
+        DocumentReference commentRef = firestore.collection("posts")
+                .document(postId)
+                .collection("comments")
+                .document(commentId);
+    
+        commentRef.delete().get();
     }
-
+    
     // ✅ Create post
     public Post createPost(Post post) throws ExecutionException, InterruptedException {
         post.setLikes(0);

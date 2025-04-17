@@ -10,7 +10,7 @@ public class Post {
 
     private String content;
     private int likes;
-    private List<String> comments;
+    private List<Comment> comments;
 
     private String authorEmail;
     private String authorUsername;
@@ -65,11 +65,11 @@ public class Post {
         this.likes = likes;
     }
 
-    public List<String> getComments() {
+    public List<Comment> getComments() {
         return comments;
     }
 
-    public void setComments(List<String> comments) {
+    public void setComments(List<Comment> comments) {
         this.comments = comments;
     }
 

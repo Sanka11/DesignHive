@@ -18,11 +18,13 @@ const Feed = () => {
       setIsLoadingPosts(true);
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/posts`);
       console.log("📦 First post from backend:", res.data[0]);
+
       const sortedPosts = res.data.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt);
         const dateB = new Date(b.updatedAt || b.createdAt);
-        return dateB - dateA; // Latest first
+        return dateB - dateA;
       });
+
       setPosts(sortedPosts);
     } catch (err) {
       console.error("❌ Error fetching posts:", err);
@@ -35,6 +37,7 @@ const Feed = () => {
     try {
       setIsLoadingUser(true);
       const storedUser = localStorage.getItem("loggedInUser");
+
       if (!storedUser) {
         console.warn("⚠️ No 'loggedInUser' found in localStorage.");
         return;
@@ -60,7 +63,10 @@ const Feed = () => {
     }
     return defaultProfilePic;
   };
-   
+
+  const handleNewComment = ({ comment, postId }) => {
+    console.log(`📝 New comment on post ${postId}:`, comment);
+  };
 
   useEffect(() => {
     fetchPosts();
@@ -79,10 +85,7 @@ const Feed = () => {
                 <p className="text-gray-500">Loading profile...</p>
               </div>
             ) : user ? (
-              <ProfileCard 
-                user={user} 
-                profilePic={getProfilePic(user)}
-              />
+              <ProfileCard user={user} profilePic={getProfilePic(user)} />
             ) : (
               <div className="bg-white p-6 rounded-lg shadow">
                 <p className="text-gray-500 text-center">No user found</p>
@@ -115,7 +118,15 @@ const Feed = () => {
                     <p className="text-gray-600">Loading posts...</p>
                   </div>
                 ) : posts.length > 0 ? (
-                  posts.map((post) => <Post key={post.id} post={post} />)
+                  posts.map((post) => (
+                    <Post
+                      key={post.id}
+                      post={post}
+                      onCommentAdded={({ comment }) =>
+                        handleNewComment({ comment, postId: post.id })
+                      }
+                    />
+                  ))
                 ) : (
                   <div className="bg-white p-6 rounded-lg shadow text-center">
                     <p className="text-gray-500">No posts yet. Be the first to post!</p>
