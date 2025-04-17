@@ -60,8 +60,23 @@ const Post = ({ user = {}, post }) => {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
-    setLoggedInUser(storedUser ? JSON.parse(storedUser) : null);
+    const fetchUserWithAvatar = async () => {
+      const storedUser = localStorage.getItem("loggedInUser");
+      if (!storedUser) return;
+
+      const parsed = JSON.parse(storedUser);
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/user/email/${parsed.email}`
+        );
+        setLoggedInUser({ ...parsed, avatar: res.data.profileImagePath });
+      } catch (err) {
+        console.warn("⚠️ Could not fetch user profile image", err);
+        setLoggedInUser(parsed);
+      }
+    };
+
+    fetchUserWithAvatar();
   }, []);
 
   useEffect(() => {
@@ -364,11 +379,12 @@ const Post = ({ user = {}, post }) => {
                 return (
                   <div key={comment.id} className="flex gap-3 group">
                     <img
-                      src={comment.userAvatar || DEFAULT_PROFILE_PIC}
+                      src={comment.avatar || DEFAULT_PROFILE_PIC}
                       onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
                       alt="Commenter Avatar"
                       className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                     />
+
                     <div className="flex-1 min-w-0">
                       <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
                         <div className="flex justify-between items-start mb-1">
