@@ -5,6 +5,8 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,7 +17,8 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final Firestore firestore = FirestoreClient.getFirestore();
-
+   @Autowired
+private EmailService emailService;
     // ✅ Get all posts (optimized, sorted)
     public List<Map<String, Object>> getAllPosts() throws ExecutionException, InterruptedException {
         List<QueryDocumentSnapshot> documents = firestore.collection("posts")
@@ -58,13 +61,30 @@ public class PostService {
     }
 
     // ✅ Like post
-    public long likePost(String postId) throws ExecutionException, InterruptedException {
+    public long likePost(String postId, String likerEmail, String likerUsername) throws ExecutionException, InterruptedException {
         DocumentReference postRef = firestore.collection("posts").document(postId);
+    
         return firestore.runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(postRef).get();
+    
+            if (!snapshot.exists()) {
+                throw new IllegalArgumentException("Post not found");
+            }
+    
             long currentLikes = snapshot.contains("likes") ? snapshot.getLong("likes") : 0;
             long updatedLikes = currentLikes + 1;
             transaction.update(postRef, "likes", updatedLikes);
+    
+            // Send email to the post author
+            String authorEmail = snapshot.getString("authorEmail");
+            if (authorEmail != null) {
+                emailService.sendEmail(
+                    authorEmail,
+                    likerUsername + " liked your post!",
+                    "\"" + likerUsername + "\" liked your post.\n\nCome back and see the engagement!"
+                );
+            }
+    
             return updatedLikes;
         }).get();
     }
