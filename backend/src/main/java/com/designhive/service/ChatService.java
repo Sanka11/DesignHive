@@ -115,6 +115,19 @@ public class ChatService {
         }
         return email;
     }
+
+    public void deleteChat(String chatId) throws ExecutionException, InterruptedException {
+        // Delete messages
+        CollectionReference messagesRef = db.collection("chats").document(chatId).collection("messages");
+        ApiFuture<QuerySnapshot> messages = messagesRef.get();
+        for (DocumentSnapshot doc : messages.get().getDocuments()) {
+            messagesRef.document(doc.getId()).delete();
+        }
+    
+        // Delete the chat document
+        db.collection("chats").document(chatId).delete();
+    }
+    
     
 
 }
