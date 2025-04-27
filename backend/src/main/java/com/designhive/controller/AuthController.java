@@ -38,4 +38,31 @@ public class AuthController {
             return ResponseEntity.status(401).body("Login failed: " + e.getMessage());
         }
     }
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestParam String email,
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword) {
+        try {
+            authService.changePassword(email, currentPassword, newPassword);
+            return ResponseEntity.ok("Password updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @PutMapping("/reset-password")
+public ResponseEntity<?> resetPassword(
+        @RequestParam String email,
+        @RequestParam String username,
+        @RequestParam String newPassword) {
+    try {
+        String result = authService.resetPasswordWithUsername(email, username, newPassword);
+        return ResponseEntity.ok(result);
+    } catch (Exception e) {
+        return ResponseEntity.status(400).body("Reset failed: " + e.getMessage());
+    }
+}
+
+
 }
