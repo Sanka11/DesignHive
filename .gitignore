@@ -17,6 +17,8 @@ target/
 *.jar
 *.war
 *.ear
+/backend/src/main/resources/firebase-adminsdk.json
+
 
 # Frontend
 build/
