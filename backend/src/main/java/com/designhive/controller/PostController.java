@@ -61,6 +61,25 @@ public class PostController {
         }
     }
     
+    @PostMapping("/{id}/unlike")
+public ResponseEntity<?> unlikePost(@PathVariable String id, @RequestBody Map<String, String> body) {
+    try {
+        String email = body.get("email");
+
+        if (email == null) {
+            return ResponseEntity.badRequest().body("Missing unliker email");
+        }
+
+        long updatedLikes = postService.unlikePost(id, email);
+        return ResponseEntity.ok(Map.of("likes", updatedLikes));
+    } catch (Exception e) {
+        logger.error("Error unliking post", e);
+        return ResponseEntity.status(500).body("Error unliking post");
+    }
+}
+
+
+
 
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(@PathVariable String id, @RequestBody Map<String, String> body) {

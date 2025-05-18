@@ -88,6 +88,24 @@ private EmailService emailService;
             return updatedLikes;
         }).get();
     }
+    public long unlikePost(String postId, String unlikerEmail) throws ExecutionException, InterruptedException {
+    DocumentReference postRef = firestore.collection("posts").document(postId);
+
+    return firestore.runTransaction(transaction -> {
+        DocumentSnapshot snapshot = transaction.get(postRef).get();
+
+        if (!snapshot.exists()) {
+            throw new IllegalArgumentException("Post not found");
+        }
+
+        long currentLikes = snapshot.contains("likes") ? snapshot.getLong("likes") : 0;
+        long updatedLikes = currentLikes > 0 ? currentLikes - 1 : 0;
+        transaction.update(postRef, "likes", updatedLikes);
+
+        return updatedLikes;
+    }).get();
+}
+
 
     // ✅ Add comment
     public void addComment(String postId, String commentEmail, String commentUser, String commentText)
