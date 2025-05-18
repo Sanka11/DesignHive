@@ -25,3 +25,4 @@ build/
 coverage/
 npm-debug.log
 yarn-error.log
+/backend/src/main/resources/firebase-adminsdk.json

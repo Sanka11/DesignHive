@@ -5,7 +5,7 @@ import java.util.Date;
 public class Comment {
 
     private String commentId;
-    private String commentEmail; // newly added
+    private String commentEmail; 
     private String userName;
     private String text;
     private Date createdAt;

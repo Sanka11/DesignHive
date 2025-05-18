@@ -16,11 +16,11 @@ import com.designhive.entity.User;
 import com.designhive.repository.UserRepository;
 import com.designhive.service.FirebaseStorageService;
 
-@RestController
-@RequestMapping("/api/user")
+@RestController //handles HTTP requests and returns JSON/text
+@RequestMapping("/api/user")//All endpoints here will start with /api/user
 public class userController {
 
-    @Autowired
+    @Autowired  //Automatically injects Spring beans (objects)
     private UserRepository userRepository;
 
     @Autowired

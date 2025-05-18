@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/posts")
-@CrossOrigin(origins = "http://localhost:5173")
+@RestController //handles HTTP requests and returns JSON/text
+@RequestMapping("/api/posts")//All endpoints here will start with /api/posts
+@CrossOrigin(origins = "http://localhost:5173")//Allow requests only from React frontend running at port 5173
 public class PostController {
 
-    @Autowired
+    @Autowired //Automatically injects Spring beans (objects)
     private PostService postService;
 
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
