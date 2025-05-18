@@ -26,8 +26,18 @@
 
 ## 🏗 Project Status
 
-🚧 Currently in development as a university group project at **SLIIT** with a 4-member team.  
-📌 First phase involves proposal presentation and initial feature development.
+✅ **Project Completed**
+
+This project was developed as a university group project at **SLIIT** with a 4-member team.  
+We have successfully completed the full development cycle including:
+
+- 🌐 Frontend with **React.js + Vite**
+- 🔙 Backend using **Spring Boot**
+- ☁️ Data and media management with **Firebase (Firestore & Storage)**
+- 🔐 Secure OAuth2 login with **Spring Security**
+- 📝 Features: User posts, media uploads, likes, comments, tagging, edit/delete functionality, personalized recommendations
+
+🎓 Final deliverables have been presented and submitted for academic evaluation.
 
 ---
 
