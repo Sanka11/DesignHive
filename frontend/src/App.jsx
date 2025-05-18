@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+
 import DashboardPage from "./pages/DashboardPage";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,6 +25,8 @@ import RecommendedPost from "./pages/RecommendedPost";
 import HomeLearningPlan from "./pages/HomeLeraningPlan.jsx";
 import CreatePlanPage from "./pages/CreatePlanPage.jsx";
 import LearningPlanPage from "./pages/LearningPlanPage.jsx";
+import ChangePassword from "./pages/ChangePassword.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
 
 
 function App() {
@@ -34,7 +36,7 @@ function App() {
       {/* Pages without Navbar */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+     
       <Route path="/" element={<LandingPage />} />
       <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
       <Route path="/chat/:chatId" element={<ChatPage currentUser={user} />} />
@@ -43,6 +45,8 @@ function App() {
       <Route path="/sent-requests" element={<SentRequests />} />
       <Route path="/following" element={<FollowingPage />} />
       <Route path="/followers" element={<FollowersPage />} />
+      <Route path="/change-password" element={<ChangePassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       
 
         

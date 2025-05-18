@@ -335,107 +335,123 @@ const Post = ({ user = {}, post }) => {
       {/* Comments Section */}
       {/* Comments Section */}
       {showComments && (
-        <div className="p-4 bg-gray-50 border-t">
-          {/* Add Comment - Improved */}
-          <div className="flex mb-4 gap-2 items-center">
-            <img
-              src={loggedInUser?.avatar || DEFAULT_PROFILE_PIC}
-              onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
-              alt="User Avatar"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <div className="flex-grow relative">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                placeholder="Write a comment..."
-                className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleAddComment}
-                disabled={isAddingComment || !newComment.trim()}
-                className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
-                  isAddingComment || !newComment.trim()
-                    ? "text-gray-400"
-                    : "text-blue-600 hover:text-blue-700"
-                } font-semibold text-sm`}
-              >
-                {isAddingComment ? "Posting..." : "Post"}
-              </button>
-            </div>
-          </div>
+  <div className="p-4 bg-amber-50 border-t border-amber-200">
+    {/* Add Comment - Bee Themed */}
+    <div className="flex mb-4 gap-2 items-center">
+      <img
+        src={loggedInUser?.avatar || DEFAULT_PROFILE_PIC}
+        onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+        alt="User Avatar"
+        className="w-8 h-8 rounded-full object-cover border-2 border-amber-400"
+      />
+      <div className="flex-grow relative">
+        <input
+          type="text"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+          placeholder="Buzz your thoughts..."
+          className="w-full border border-amber-300 bg-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent shadow-inner"
+        />
+        <button
+          onClick={handleAddComment}
+          disabled={isAddingComment || !newComment.trim()}
+          className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
+            isAddingComment || !newComment.trim()
+              ? "text-amber-300"
+              : "text-amber-600 hover:text-amber-700"
+          } font-semibold text-sm flex items-center`}
+        >
+          {isAddingComment ? (
+            "Posting..."
+          ) : (
+            <>
+              click <span className="ml-1">🐝</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
 
-          {/* Comments List - Improved */}
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {comments.length === 0 ? (
-              <div className="text-center py-4 text-gray-500 text-sm">
-                No comments yet. Be the first to comment!
+    {/* Comments List - Bee Themed */}
+    <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+      {comments.length === 0 ? (
+        <div className="text-center py-4 text-amber-700 text-sm bg-amber-100 rounded-lg">
+          <span className="inline-block mb-1">🐝</span>
+          <p>No comments yet. Be the first to buzz!</p>
+        </div>
+      ) : (
+        comments.map((comment) => {
+          const isOwner = loggedInUser?.email === comment.commentEmail;
+          return (
+            <div key={comment.id} className="flex gap-3 group">
+              <div className="relative">
+                <img
+                  src={comment.avatar || DEFAULT_PROFILE_PIC}
+                  onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
+                  alt="Commenter Avatar"
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 border-2 border-amber-400"
+                />
+                {isOwner && (
+                  <span className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    👑
+                  </span>
+                )}
               </div>
-            ) : (
-              comments.map((comment) => {
-                const isOwner = loggedInUser?.email === comment.commentEmail;
-                return (
-                  <div key={comment.id} className="flex gap-3 group">
-                    <img
-                      src={comment.avatar || DEFAULT_PROFILE_PIC}
-                      onError={(e) => (e.target.src = DEFAULT_PROFILE_PIC)}
-                      alt="Commenter Avatar"
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    />
 
-                    <div className="flex-1 min-w-0">
-                      <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-semibold text-sm text-gray-800">
-                            {comment.commentUser || comment.commentEmail}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(
-                              new Date(
-                                comment.createdAt?.seconds
-                                  ? comment.createdAt.seconds * 1000
-                                  : comment.createdAt
-                              ),
-                              { addSuffix: true }
-                            )}
-                          </span>
-                        </div>
+              <div className="flex-1 min-w-0">
+                <div className="bg-white p-3 rounded-2xl shadow-sm border border-amber-200 hover:border-amber-300 transition-colors relative">
+                  {/* Bee wings decoration */}
+                  <div className="absolute -left-2 top-3 w-4 h-4 bg-amber-100 rounded-full opacity-30"></div>
+                  <div className="absolute -left-2 top-5 w-4 h-4 bg-amber-100 rounded-full opacity-30"></div>
+                  
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-semibold text-sm text-amber-800">
+                      {comment.commentUser || comment.commentEmail}
+                    </span>
+                    <span className="text-xs text-amber-600">
+                      {formatDistanceToNow(
+                        new Date(
+                          comment.createdAt?.seconds
+                            ? comment.createdAt.seconds * 1000
+                            : comment.createdAt
+                        ),
+                        { addSuffix: true }
+                      )}
+                    </span>
+                  </div>
 
-                        {editingCommentId === comment.id ? (
-                          <div className="space-y-2">
-                            <textarea
-                              className="w-full border p-2 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              value={editedCommentText}
-                              onChange={(e) =>
-                                setEditedCommentText(e.target.value)
-                              }
-                              rows="3"
-                              autoFocus
-                            />
-                            <div className="flex gap-2 justify-end text-xs">
-                              <button
-                                className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
-                                onClick={() => setEditingCommentId(null)}
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                onClick={() => handleEditComment(comment.id)}
-                                disabled={!editedCommentText.trim()}
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-800 whitespace-pre-line">
-                            {comment.text}
-                          </div>
-                        )}
+                  {editingCommentId === comment.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        className="w-full border border-amber-300 p-2 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500 bg-amber-50"
+                        value={editedCommentText}
+                        onChange={(e) => setEditedCommentText(e.target.value)}
+                        rows="3"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 justify-end text-xs">
+                        <button
+                          className="px-3 py-1 bg-amber-200 text-amber-800 rounded-lg hover:bg-amber-300"
+                          onClick={() => setEditingCommentId(null)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-3 py-1 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                          onClick={() => handleEditComment(comment.id)}
+                          disabled={!editedCommentText.trim()}
+                        >
+                          Save
+                        </button>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-amber-900 whitespace-pre-line">
+                      {comment.text}
+                    </div>
+                  )}
+                </div>
 
                       {/* Action Buttons - Only visible on hover or when owner */}
                       {isOwner && (

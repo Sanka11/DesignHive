@@ -17,9 +17,12 @@ target/
 *.jar
 *.war
 *.ear
+/backend/src/main/resources/firebase-adminsdk.json
+
 
 # Frontend
 build/
 coverage/
 npm-debug.log
 yarn-error.log
+/backend/src/main/resources/firebase-adminsdk.json

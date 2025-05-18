@@ -13,17 +13,21 @@ import java.io.IOException;
 public class FirebaseInitializer {
 
     @PostConstruct
-    public void init() throws IOException {
-        FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-adminsdk.json");
+    public void init() {
+        try {
+            FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-adminsdk.json");
 
-        FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .setStorageBucket("designhive-9cd14.appspot.com")
-                .build();
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setStorageBucket("designhive-9cd14.appspot.com")
+                    .build();
 
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options);
-            System.out.println("✅ Firebase initialized successfully!");
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp.initializeApp(options);
+                System.out.println("✅ Firebase initialized successfully!");
+            }
+        } catch (IOException e) {
+            System.err.println("❌ Failed to initialize Firebase: " + e.getMessage());
         }
     }
 }

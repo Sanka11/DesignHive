@@ -63,4 +63,39 @@ public class AuthService {
 
         return jwtUtil.generateToken(user.getEmail());
     }
+
+    public void changePassword(String email, String currentPassword, String newPassword) throws Exception {
+        User user = userRepository.getUserByEmail(email);
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+    
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new Exception("Current password is incorrect");
+        }
+    
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.saveUser(user);
+    }
+
+
+    public String resetPasswordWithUsername(String email, String username, String newPassword) throws Exception {
+        User user = userRepository.getUserByEmail(email);
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+    
+        if (!user.getUsername().equals(username)) {
+            throw new Exception("Username and email do not match");
+        }
+    
+        String hashedPassword = new BCryptPasswordEncoder().encode(newPassword);
+        user.setPassword(hashedPassword);
+    
+        userRepository.saveUser(user);
+        return "Password reset successful";
+    }
+    
+    
+    
 }
