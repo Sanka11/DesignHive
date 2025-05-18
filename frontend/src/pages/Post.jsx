@@ -100,15 +100,32 @@ const Post = ({ user = {}, post }) => {
   };
 
   const handleLike = async () => {
-    try {
-      const email = post?.authorEmail; // make sure user is defined
-      const username = post?.authorUsername;
+  try {
+    const email = post?.authorEmail;
+    const username = post?.authorUsername;
 
-      if (!email || !username) {
-        console.error("Missing email or username");
-        return;
-      }
+    if (!email || !username) {
+      console.error("Missing email or username");
+      return;
+    }
 
+    const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
+
+    if (isLiked) {
+      // UNLIKE
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/unlike`,
+        {
+          email,
+          username,
+        }
+      );
+      setLikes(res.data.likes);
+      const updatedLikes = likedPosts.filter((pid) => pid !== id);
+      localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
+      setIsLiked(false);
+    } else {
+      // LIKE
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/posts/${id}/like`,
         {
@@ -116,21 +133,17 @@ const Post = ({ user = {}, post }) => {
           username,
         }
       );
-
       setLikes(res.data.likes);
-
-      const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
-      const updatedLikes = isLiked
-        ? likedPosts.filter((pid) => pid !== id)
-        : [...likedPosts, id];
-
+      const updatedLikes = [...likedPosts, id];
       localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
-      setIsLiked(!isLiked);
-    } catch (err) {
-      console.error("Error liking post", err);
+      setIsLiked(true);
     }
-  };
+  } catch (err) {
+    console.error("Error toggling like", err);
+  }
+};
 
+ 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
